@@ -1,0 +1,584 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Live HTML & CSS Editor</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    background: #1e1e2e;
+    color: #cdd6f4;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  header {
+    background: #181825;
+    padding: 10px 20px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #313244;
+  }
+
+  header h1 {
+    font-size: 16px;
+    font-weight: 600;
+    color: #cba6f7;
+  }
+
+  header .actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  header button {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 5px 14px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+    transition: background 0.2s;
+  }
+
+  header button:hover {
+    background: #45475a;
+  }
+
+  .main {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+  }
+
+  .editors {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+  }
+
+  .editor-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-bottom: 1px solid #313244;
+  }
+
+  .editor-panel:last-child {
+    border-bottom: none;
+  }
+
+  .panel-header {
+    background: #181825;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a6adc8;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border-bottom: 1px solid #313244;
+  }
+
+  .panel-header .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .panel-header .dot.html { background: #fab387; }
+  .panel-header .dot.css { background: #89b4fa; }
+
+  .editor-wrap {
+    flex: 1;
+    position: relative;
+    overflow: hidden;
+    background: #1e1e2e;
+  }
+
+  .editor-wrap textarea,
+  .editor-wrap pre {
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    padding: 12px 12px 12px 52px;
+    white-space: pre;
+    overflow: auto;
+    position: absolute;
+    top: 0; left: 0;
+    width: 100%;
+    height: 100%;
+    tab-size: 2;
+    -moz-tab-size: 2;
+  }
+
+  .editor-wrap textarea {
+    background: transparent;
+    color: transparent;
+    caret-color: #f5e0dc;
+    border: none;
+    outline: none;
+    resize: none;
+    z-index: 2;
+  }
+
+  .editor-wrap pre {
+    z-index: 1;
+    margin: 0;
+    pointer-events: none;
+    color: #cdd6f4;
+  }
+
+  .editor-wrap pre code {
+    font-family: inherit;
+    font-size: inherit;
+    line-height: inherit;
+  }
+
+  .line-numbers {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 40px;
+    height: 100%;
+    background: #181825;
+    z-index: 3;
+    padding: 12px 8px 12px 0;
+    text-align: right;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 14px;
+    line-height: 1.6;
+    color: #585b70;
+    overflow: hidden;
+    pointer-events: none;
+    border-right: 1px solid #313244;
+    user-select: none;
+  }
+
+  .preview-panel {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    border-left: 2px solid #313244;
+    min-width: 0;
+  }
+
+  .preview-panel .panel-header .dot { background: #a6e3a1; }
+
+  .preview-panel iframe {
+    flex: 1;
+    border: none;
+    background: #fff;
+  }
+
+  .resizer {
+    width: 5px;
+    cursor: col-resize;
+    background: #313244;
+    transition: background 0.2s;
+    flex-shrink: 0;
+  }
+
+  .resizer:hover, .resizer.active {
+    background: #cba6f7;
+  }
+
+  /* Syntax highlighting colors */
+  .hl-tag { color: #f38ba8; }
+  .hl-attr { color: #fab387; }
+  .hl-str { color: #a6e3a1; }
+  .hl-comment { color: #585b70; font-style: italic; }
+  .hl-entity { color: #f5c2e7; }
+  .hl-bracket { color: #6c7086; }
+  .hl-text { color: #cdd6f4; }
+  .hl-css-sel { color: #f38ba8; }
+  .hl-css-prop { color: #89b4fa; }
+  .hl-css-val { color: #a6e3a1; }
+  .hl-css-unit { color: #fab387; }
+  .hl-css-punct { color: #6c7086; }
+  .hl-css-comment { color: #585b70; font-style: italic; }
+  .hl-css-atrule { color: #cba6f7; }
+  .hl-css-important { color: #f38ba8; font-weight: bold; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>&#9998; Live HTML &amp; CSS Editor</h1>
+  <div class="actions">
+    <button onclick="resetEditors()">Reset</button>
+    <button onclick="copyOutput()">Copy Output</button>
+  </div>
+</header>
+
+<div class="main">
+  <div class="editors" id="editorsPane">
+    <!-- HTML Editor -->
+    <div class="editor-panel">
+      <div class="panel-header"><span class="dot html"></span>HTML</div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="htmlLines">1</div>
+        <pre><code id="htmlHighlight"></code></pre>
+        <textarea id="htmlEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
+    <!-- CSS Editor -->
+    <div class="editor-panel">
+      <div class="panel-header"><span class="dot css"></span>CSS</div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="cssLines">1</div>
+        <pre><code id="cssHighlight"></code></pre>
+        <textarea id="cssEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <div class="resizer" id="resizer"></div>
+
+  <div class="preview-panel" id="previewPane">
+    <div class="panel-header"><span class="dot"></span>Preview</div>
+    <iframe id="preview"></iframe>
+  </div>
+</div>
+
+<script>
+const htmlEditor = document.getElementById('htmlEditor');
+const cssEditor = document.getElementById('cssEditor');
+const htmlHighlight = document.getElementById('htmlHighlight');
+const cssHighlight = document.getElementById('cssHighlight');
+const htmlLines = document.getElementById('htmlLines');
+const cssLines = document.getElementById('cssLines');
+const preview = document.getElementById('preview');
+
+const defaultHTML = `<div class="card">
+  <h1>Hello World!</h1>
+  <p>Start editing to see changes live.</p>
+  <button class="btn">Click Me</button>
+</div>`;
+
+const defaultCSS = `body {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: 100vh;
+  margin: 0;
+  background: #f0f0f0;
+  font-family: sans-serif;
+}
+
+.card {
+  background: white;
+  padding: 40px;
+  border-radius: 12px;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
+  text-align: center;
+}
+
+h1 {
+  color: #333;
+  margin-bottom: 10px;
+}
+
+p {
+  color: #666;
+  margin-bottom: 20px;
+}
+
+.btn {
+  background: #6c5ce7;
+  color: white;
+  border: none;
+  padding: 10px 28px;
+  border-radius: 6px;
+  font-size: 16px;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.btn:hover {
+  background: #5a4bd1;
+}`;
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---- HTML Syntax Highlighting ----
+function highlightHTML(code) {
+  let result = '';
+  let i = 0;
+  while (i < code.length) {
+    // Comments
+    if (code.startsWith('<!--', i)) {
+      let end = code.indexOf('-->', i);
+      if (end === -1) end = code.length - 3;
+      result += '<span class="hl-comment">' + escapeHTML(code.slice(i, end + 3)) + '</span>';
+      i = end + 3;
+    }
+    // Tags
+    else if (code[i] === '<' && (code[i+1] === '/' || /[a-zA-Z!]/.test(code[i+1] || ''))) {
+      let tag = '<span class="hl-bracket">&lt;</span>';
+      i++;
+      if (code[i] === '/') { tag += '<span class="hl-bracket">/</span>'; i++; }
+      // Tag name
+      let name = '';
+      while (i < code.length && /[a-zA-Z0-9\-]/.test(code[i])) { name += code[i]; i++; }
+      tag += '<span class="hl-tag">' + escapeHTML(name) + '</span>';
+      // Attributes
+      while (i < code.length && code[i] !== '>' && !(code[i] === '/' && code[i+1] === '>')) {
+        if (/\s/.test(code[i])) { tag += code[i]; i++; continue; }
+        // Attribute name
+        let attr = '';
+        while (i < code.length && /[a-zA-Z0-9\-_]/.test(code[i])) { attr += code[i]; i++; }
+        if (attr) tag += '<span class="hl-attr">' + escapeHTML(attr) + '</span>';
+        // =
+        if (code[i] === '=') {
+          tag += '<span class="hl-bracket">=</span>'; i++;
+          // Attribute value
+          if (code[i] === '"' || code[i] === "'") {
+            let q = code[i]; let val = q; i++;
+            while (i < code.length && code[i] !== q) { val += code[i]; i++; }
+            if (i < code.length) { val += code[i]; i++; }
+            tag += '<span class="hl-str">' + escapeHTML(val) + '</span>';
+          }
+        }
+        if (!/[\s\/>a-zA-Z0-9\-_=]/.test(code[i] || '>')) { tag += escapeHTML(code[i] || ''); i++; }
+      }
+      if (code[i] === '/' && code[i+1] === '>') {
+        tag += '<span class="hl-bracket">/&gt;</span>'; i += 2;
+      } else if (code[i] === '>') {
+        tag += '<span class="hl-bracket">&gt;</span>'; i++;
+      }
+      result += tag;
+    }
+    // Entity
+    else if (code[i] === '&') {
+      let ent = '&';
+      i++;
+      while (i < code.length && /[a-zA-Z0-9#]/.test(code[i])) { ent += code[i]; i++; }
+      if (code[i] === ';') { ent += ';'; i++; }
+      result += '<span class="hl-entity">' + escapeHTML(ent) + '</span>';
+    }
+    else {
+      result += escapeHTML(code[i]);
+      i++;
+    }
+  }
+  return result;
+}
+
+// ---- CSS Syntax Highlighting ----
+function highlightCSS(code) {
+  let result = '';
+  let i = 0;
+  while (i < code.length) {
+    // Comments
+    if (code[i] === '/' && code[i+1] === '*') {
+      let end = code.indexOf('*/', i + 2);
+      if (end === -1) end = code.length - 2;
+      result += '<span class="hl-css-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
+      i = end + 2;
+    }
+    // @ rules
+    else if (code[i] === '@') {
+      let word = '@';
+      i++;
+      while (i < code.length && /[a-zA-Z\-]/.test(code[i])) { word += code[i]; i++; }
+      result += '<span class="hl-css-atrule">' + escapeHTML(word) + '</span>';
+    }
+    // Inside a block
+    else if (code[i] === '{') {
+      result += '<span class="hl-css-punct">{</span>';
+      i++;
+      // Properties inside block
+      while (i < code.length && code[i] !== '}') {
+        // Comments inside block
+        if (code[i] === '/' && code[i+1] === '*') {
+          let end = code.indexOf('*/', i + 2);
+          if (end === -1) end = code.length - 2;
+          result += '<span class="hl-css-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
+          i = end + 2;
+        }
+        // Nested block (media queries etc.)
+        else if (code[i] === '{') {
+          result += '<span class="hl-css-punct">{</span>';
+          i++;
+        }
+        // Whitespace
+        else if (/\s/.test(code[i])) {
+          result += code[i]; i++;
+        }
+        // Property
+        else {
+          let prop = '';
+          while (i < code.length && code[i] !== ':' && code[i] !== '}' && code[i] !== '{' && !(code[i] === '/' && code[i+1] === '*')) {
+            prop += code[i]; i++;
+          }
+          if (code[i] === ':') {
+            result += '<span class="hl-css-prop">' + escapeHTML(prop) + '</span>';
+            result += '<span class="hl-css-punct">:</span>';
+            i++;
+            // Value
+            let val = '';
+            while (i < code.length && code[i] !== ';' && code[i] !== '}') {
+              val += code[i]; i++;
+            }
+            // Highlight value with units and !important
+            let hv = escapeHTML(val);
+            hv = hv.replace(/(\d+\.?\d*)(px|em|rem|%|vh|vw|vmin|vmax|s|ms|deg|fr|ch|ex)/g,
+              '$1<span class="hl-css-unit">$2</span>');
+            hv = hv.replace(/(!important)/g, '<span class="hl-css-important">$1</span>');
+            result += '<span class="hl-css-val">' + hv + '</span>';
+            if (code[i] === ';') {
+              result += '<span class="hl-css-punct">;</span>'; i++;
+            }
+          } else {
+            // Likely a selector inside (nested/media)
+            result += '<span class="hl-css-sel">' + escapeHTML(prop) + '</span>';
+          }
+        }
+      }
+      if (code[i] === '}') {
+        result += '<span class="hl-css-punct">}</span>'; i++;
+      }
+    }
+    // Selector (outside blocks)
+    else if (/\s/.test(code[i])) {
+      result += code[i]; i++;
+    }
+    else {
+      let sel = '';
+      while (i < code.length && code[i] !== '{' && !(code[i] === '/' && code[i+1] === '*')) {
+        sel += code[i]; i++;
+      }
+      result += '<span class="hl-css-sel">' + escapeHTML(sel) + '</span>';
+    }
+  }
+  return result;
+}
+
+function updateLineNumbers(text, el) {
+  const count = text.split('\n').length;
+  let nums = '';
+  for (let i = 1; i <= count; i++) nums += i + '\n';
+  el.textContent = nums;
+}
+
+function syncScroll(textarea, pre, lineNums) {
+  pre.parentElement.scrollTop = textarea.scrollTop;
+  pre.parentElement.scrollLeft = textarea.scrollLeft;
+  lineNums.style.transform = `translateY(${-textarea.scrollTop}px)`;
+}
+
+function updatePreview() {
+  const html = htmlEditor.value;
+  const css = cssEditor.value;
+  const doc = preview.contentDocument || preview.contentWindow.document;
+  doc.open();
+  doc.write(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}</body></html>`);
+  doc.close();
+}
+
+function updateHTML() {
+  htmlHighlight.innerHTML = highlightHTML(htmlEditor.value) + '\n';
+  updateLineNumbers(htmlEditor.value, htmlLines);
+  updatePreview();
+}
+
+function updateCSS() {
+  cssHighlight.innerHTML = highlightCSS(cssEditor.value) + '\n';
+  updateLineNumbers(cssEditor.value, cssLines);
+  updatePreview();
+}
+
+// Tab support
+function handleTab(e) {
+  if (e.key === 'Tab') {
+    e.preventDefault();
+    const ta = e.target;
+    const start = ta.selectionStart;
+    const end = ta.selectionEnd;
+    ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+    ta.selectionStart = ta.selectionEnd = start + 2;
+    ta.dispatchEvent(new Event('input'));
+  }
+}
+
+htmlEditor.addEventListener('input', updateHTML);
+cssEditor.addEventListener('input', updateCSS);
+htmlEditor.addEventListener('keydown', handleTab);
+cssEditor.addEventListener('keydown', handleTab);
+
+htmlEditor.addEventListener('scroll', () => syncScroll(htmlEditor, htmlHighlight.parentElement, htmlLines));
+cssEditor.addEventListener('scroll', () => syncScroll(cssEditor, cssHighlight.parentElement, cssLines));
+
+// Resizer
+const resizer = document.getElementById('resizer');
+const editorsPane = document.getElementById('editorsPane');
+const previewPane = document.getElementById('previewPane');
+let isResizing = false;
+
+resizer.addEventListener('mousedown', (e) => {
+  isResizing = true;
+  resizer.classList.add('active');
+  document.body.style.cursor = 'col-resize';
+  document.body.style.userSelect = 'none';
+  e.preventDefault();
+});
+
+document.addEventListener('mousemove', (e) => {
+  if (!isResizing) return;
+  const container = document.querySelector('.main');
+  const rect = container.getBoundingClientRect();
+  const ratio = (e.clientX - rect.left) / rect.width;
+  const clamped = Math.max(0.2, Math.min(0.8, ratio));
+  editorsPane.style.flex = 'none';
+  previewPane.style.flex = 'none';
+  editorsPane.style.width = (clamped * 100) + '%';
+  previewPane.style.width = ((1 - clamped) * 100) + '%';
+});
+
+document.addEventListener('mouseup', () => {
+  if (isResizing) {
+    isResizing = false;
+    resizer.classList.remove('active');
+    document.body.style.cursor = '';
+    document.body.style.userSelect = '';
+  }
+});
+
+function resetEditors() {
+  htmlEditor.value = defaultHTML;
+  cssEditor.value = defaultCSS;
+  updateHTML();
+  updateCSS();
+}
+
+function copyOutput() {
+  const html = htmlEditor.value;
+  const css = cssEditor.value;
+  const full = `<!DOCTYPE html>\n<html>\n<head>\n<style>\n${css}\n</style>\n</head>\n<body>\n${html}\n</body>\n</html>`;
+  navigator.clipboard.writeText(full).then(() => {
+    const btn = document.querySelector('.actions button:last-child');
+    btn.textContent = 'Copied!';
+    setTimeout(() => btn.textContent = 'Copy Output', 1500);
+  });
+}
+
+// Init
+htmlEditor.value = defaultHTML;
+cssEditor.value = defaultCSS;
+updateHTML();
+updateCSS();
+</script>
+</body>
+</html>
