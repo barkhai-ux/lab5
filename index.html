@@ -455,23 +455,219 @@ function updateCSS() {
   updatePreview();
 }
 
-// Tab support
-function handleTab(e) {
-  if (e.key === 'Tab') {
-    e.preventDefault();
-    const ta = e.target;
-    const start = ta.selectionStart;
-    const end = ta.selectionEnd;
-    ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
-    ta.selectionStart = ta.selectionEnd = start + 2;
-    ta.dispatchEvent(new Event('input'));
+// ---- Void elements (self-closing) ----
+var voidElements = new Set(['area','base','br','col','embed','hr','img','input','link','meta','param','source','track','wbr']);
+
+// ---- Emmet Expansion Engine ----
+function deepCloneNodes(arr) { return JSON.parse(JSON.stringify(arr)); }
+
+function expandEmmet(abbr) {
+  var p = 0;
+  function peek() { return p < abbr.length ? abbr[p] : null; }
+  function parseIdent() {
+    var s = '';
+    while (p < abbr.length && /[a-zA-Z0-9]/.test(abbr[p])) s += abbr[p++];
+    return s;
   }
+  function parseNum() {
+    var s = '';
+    while (p < abbr.length && /[0-9]/.test(abbr[p])) s += abbr[p++];
+    return parseInt(s) || 1;
+  }
+  function parseText() {
+    var s = '', d = 1;
+    while (p < abbr.length && d > 0) {
+      if (abbr[p] === '{') d++;
+      else if (abbr[p] === '}') { d--; if (d === 0) { p++; return s; } }
+      s += abbr[p++];
+    }
+    return s;
+  }
+  function parseElement() {
+    var tag = parseIdent(), id = '', cls = [], txt = '';
+    while (p < abbr.length && (abbr[p] === '#' || abbr[p] === '.')) {
+      if (abbr[p] === '#') {
+        p++; id = '';
+        while (p < abbr.length && /[a-zA-Z0-9_-]/.test(abbr[p])) id += abbr[p++];
+      } else {
+        p++; var c = '';
+        while (p < abbr.length && /[a-zA-Z0-9_-]/.test(abbr[p])) c += abbr[p++];
+        if (c) cls.push(c);
+      }
+    }
+    if (peek() === '[') {
+      p++;
+      while (p < abbr.length && abbr[p] !== ']') p++;
+      if (peek() === ']') p++;
+    }
+    if (peek() === '{') { p++; txt = parseText(); }
+    if (!tag && !id && cls.length === 0) return null;
+    if (!tag) tag = 'div';
+    return { tag: tag, id: id, classes: cls, text: txt, children: [] };
+  }
+  function parseMult() { if (peek() === '*') { p++; return parseNum(); } return 1; }
+  function parseFactor() {
+    if (peek() === '(') {
+      p++;
+      var nodes = parseExpr();
+      if (peek() === ')') p++;
+      var m = parseMult(), res = [];
+      for (var i = 0; i < m; i++) res = res.concat(deepCloneNodes(nodes));
+      return res;
+    }
+    var el = parseElement();
+    if (!el) return [];
+    var m = parseMult();
+    if (peek() === '>') { p++; el.children = parseExpr(); }
+    var res = [];
+    for (var i = 0; i < m; i++) res.push(deepCloneNodes([el])[0]);
+    return res;
+  }
+  function parseExpr() {
+    var nodes = parseFactor();
+    while (peek() === '+') { p++; nodes = nodes.concat(parseFactor()); }
+    return nodes;
+  }
+  var tree = parseExpr();
+  if (tree.length === 0 || p < abbr.length) return null;
+
+  var cursorPlaced = false;
+  function renderNode(nd, indent) {
+    var sp = '  '.repeat(indent);
+    var attrs = '';
+    if (nd.id) attrs += ' id="' + nd.id + '"';
+    if (nd.classes.length) attrs += ' class="' + nd.classes.join(' ') + '"';
+    if (voidElements.has(nd.tag.toLowerCase())) return sp + '\x3c' + nd.tag + attrs + '>';
+    var open = '\x3c' + nd.tag + attrs + '>';
+    var close = '\x3c/' + nd.tag + '>';
+    if (nd.children.length === 0 && !nd.text) {
+      if (!cursorPlaced) { cursorPlaced = true; return sp + open + '\0' + close; }
+      return sp + open + close;
+    }
+    if (nd.children.length === 0 && nd.text) return sp + open + nd.text + close;
+    var lines = [sp + open];
+    if (nd.text) lines.push(sp + '  ' + nd.text);
+    for (var j = 0; j < nd.children.length; j++) lines.push(renderNode(nd.children[j], indent + 1));
+    lines.push(sp + close);
+    return lines.join('\n');
+  }
+  return tree.map(function(n) { return renderNode(n, 0); }).join('\n');
+}
+
+function getEmmetAbbr(text, pos) {
+  var start = pos;
+  while (start > 0 && /[a-zA-Z0-9#.>+*{}\-_()]/.test(text[start - 1])) start--;
+  var abbr = text.substring(start, pos);
+  if (!abbr || !/^[a-zA-Z.#(]/.test(abbr)) return null;
+  return { start: start, abbr: abbr };
+}
+
+// ---- Tab: Emmet expand or indent ----
+function handleTab(e) {
+  if (e.key !== 'Tab') return;
+  e.preventDefault();
+  var ta = e.target;
+  var pos = ta.selectionStart;
+
+  if (ta === htmlEditor) {
+    var em = getEmmetAbbr(ta.value, pos);
+    if (em) {
+      try {
+        var expanded = expandEmmet(em.abbr);
+        if (expanded) {
+          var lineStart = em.start;
+          while (lineStart > 0 && ta.value[lineStart - 1] !== '\n') lineStart--;
+          var baseIndent = '';
+          var lp = lineStart;
+          while (lp < em.start && (ta.value[lp] === ' ' || ta.value[lp] === '\t')) { baseIndent += ta.value[lp]; lp++; }
+          var lines = expanded.split('\n');
+          var indented = lines[0];
+          for (var li = 1; li < lines.length; li++) indented += '\n' + baseIndent + lines[li];
+          var cursorIdx = indented.indexOf('\0');
+          var clean = indented.replace('\0', '');
+          ta.value = ta.value.substring(0, em.start) + clean + ta.value.substring(pos);
+          ta.selectionStart = ta.selectionEnd = cursorIdx >= 0 ? em.start + cursorIdx : em.start + clean.length;
+          ta.dispatchEvent(new Event('input'));
+          return;
+        }
+      } catch(ex) {}
+    }
+  }
+
+  var start = ta.selectionStart, end = ta.selectionEnd;
+  ta.value = ta.value.substring(0, start) + '  ' + ta.value.substring(end);
+  ta.selectionStart = ta.selectionEnd = start + 2;
+  ta.dispatchEvent(new Event('input'));
+}
+
+// ---- Auto-close HTML tags on > ----
+function handleAutoClose(e) {
+  if (e.key !== '>') return;
+  var ta = e.target;
+  var pos = ta.selectionStart;
+  var before = ta.value.substring(0, pos);
+  if (/<\/[a-zA-Z][a-zA-Z0-9]*\s*$/.test(before)) return;
+  if (before.endsWith('/')) return;
+  var m = before.match(/<([a-zA-Z][a-zA-Z0-9]*)(?:\s[^<]*)?$/);
+  if (!m) return;
+  var tag = m[1].toLowerCase();
+  if (voidElements.has(tag)) return;
+  e.preventDefault();
+  var after = ta.value.substring(pos);
+  var closing = '>\x3c/' + tag + '>';
+  ta.value = before + closing + after;
+  ta.selectionStart = ta.selectionEnd = pos + 1;
+  ta.dispatchEvent(new Event('input'));
+}
+
+// ---- Smart Enter: auto-indent and expand between tags ----
+function handleEnter(e) {
+  if (e.key !== 'Enter') return;
+  var ta = e.target;
+  var pos = ta.selectionStart;
+  var before = ta.value.substring(0, pos);
+  var after = ta.value.substring(pos);
+  var lastLine = before.split('\n').pop();
+  var indent = lastLine.match(/^(\s*)/)[1];
+
+  e.preventDefault();
+
+  if (before.endsWith('>') && /^\s*<\//.test(after)) {
+    var newText = '\n' + indent + '  \n' + indent;
+    ta.value = before + newText + after;
+    ta.selectionStart = ta.selectionEnd = pos + indent.length + 3;
+  } else {
+    var extra = '';
+    if (before.match(/<[a-zA-Z][^>]*>\s*$/) && ta === htmlEditor) extra = '  ';
+    if (before.match(/\{\s*$/) && ta === cssEditor) extra = '  ';
+    ta.value = before + '\n' + indent + extra + after;
+    ta.selectionStart = ta.selectionEnd = pos + 1 + indent.length + extra.length;
+  }
+  ta.dispatchEvent(new Event('input'));
+}
+
+// ---- Auto-close CSS braces ----
+function handleBrace(e) {
+  if (e.key !== '{') return;
+  var ta = e.target;
+  var pos = ta.selectionStart;
+  var after = ta.value.substring(pos);
+  if (after[0] === '}') return;
+  e.preventDefault();
+  var before = ta.value.substring(0, pos);
+  ta.value = before + '{}' + after;
+  ta.selectionStart = ta.selectionEnd = pos + 1;
+  ta.dispatchEvent(new Event('input'));
 }
 
 htmlEditor.addEventListener('input', updateHTML);
 cssEditor.addEventListener('input', updateCSS);
 htmlEditor.addEventListener('keydown', handleTab);
 cssEditor.addEventListener('keydown', handleTab);
+htmlEditor.addEventListener('keydown', handleAutoClose);
+htmlEditor.addEventListener('keydown', handleEnter);
+cssEditor.addEventListener('keydown', handleEnter);
+cssEditor.addEventListener('keydown', handleBrace);
 
 htmlEditor.addEventListener('scroll', () => syncScroll(htmlEditor, htmlHighlight.parentElement, htmlLines));
 cssEditor.addEventListener('scroll', () => syncScroll(cssEditor, cssHighlight.parentElement, cssLines));
