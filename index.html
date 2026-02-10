@@ -192,6 +192,160 @@
     background: #cba6f7;
   }
 
+  /* Project bar */
+  .project-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .project-bar select {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 5px 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    min-width: 160px;
+    max-width: 220px;
+    cursor: pointer;
+    outline: none;
+  }
+
+  .project-bar select:focus {
+    border-color: #cba6f7;
+  }
+
+  .btn-save { background: #313244; }
+  .btn-save:hover { background: #45475a; }
+
+  .btn-new { background: #313244; }
+  .btn-new:hover { background: #45475a; }
+
+  .btn-danger {
+    background: #313244 !important;
+    color: #f38ba8 !important;
+    border-color: #45475a !important;
+  }
+
+  .btn-danger:hover {
+    background: #f38ba8 !important;
+    color: #1e1e2e !important;
+  }
+
+  .unsaved-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #fab387;
+    display: none;
+    flex-shrink: 0;
+  }
+
+  .unsaved-dot.show { display: block; }
+
+  /* Toast notification */
+  .toast {
+    position: fixed;
+    bottom: 20px;
+    left: 50%;
+    transform: translateX(-50%) translateY(20px);
+    padding: 10px 24px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s, transform 0.3s;
+  }
+
+  .toast.show {
+    opacity: 1;
+    transform: translateX(-50%) translateY(0);
+  }
+
+  .toast.success { background: #a6e3a1; color: #1e1e2e; }
+  .toast.error { background: #f38ba8; color: #1e1e2e; }
+  .toast.info { background: #89b4fa; color: #1e1e2e; }
+
+  /* Confirm dialog */
+  .modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.6);
+    z-index: 900;
+    display: none;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .modal-overlay.show { display: flex; }
+
+  .modal {
+    background: #1e1e2e;
+    border: 1px solid #45475a;
+    border-radius: 12px;
+    padding: 24px;
+    min-width: 320px;
+    max-width: 420px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.4);
+  }
+
+  .modal h3 {
+    font-size: 15px;
+    margin-bottom: 12px;
+    color: #cdd6f4;
+  }
+
+  .modal input {
+    width: 100%;
+    padding: 8px 12px;
+    background: #313244;
+    border: 1px solid #45475a;
+    border-radius: 6px;
+    color: #cdd6f4;
+    font-size: 13px;
+    outline: none;
+    margin-bottom: 16px;
+  }
+
+  .modal input:focus { border-color: #cba6f7; }
+
+  .modal .modal-actions {
+    display: flex;
+    justify-content: flex-end;
+    gap: 8px;
+  }
+
+  .modal button {
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 6px 16px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 12px;
+  }
+
+  .modal button:hover { background: #45475a; }
+
+  .modal button.primary {
+    background: #cba6f7;
+    color: #1e1e2e;
+    border-color: #cba6f7;
+  }
+
+  .modal button.primary:hover { background: #b491e0; }
+
+  .modal button.danger {
+    background: #f38ba8;
+    color: #1e1e2e;
+    border-color: #f38ba8;
+  }
+
+  .modal button.danger:hover { background: #e07090; }
+
   /* Syntax highlighting colors */
   .hl-tag { color: #f38ba8; }
   .hl-attr { color: #fab387; }
@@ -214,11 +368,42 @@
 
 <header>
   <h1>&#9998; Live HTML &amp; CSS Editor</h1>
+  <div class="project-bar">
+    <select id="projectSelect" title="Select project"></select>
+    <span class="unsaved-dot" id="unsavedDot" title="Unsaved changes"></span>
+    <button class="btn-new" onclick="newProject()">+ New</button>
+    <button class="btn-save" onclick="saveProject()">Save</button>
+    <button onclick="renameProject()">Rename</button>
+    <button class="btn-danger" onclick="deleteProject()">Delete</button>
+  </div>
   <div class="actions">
     <button onclick="resetEditors()">Reset</button>
     <button onclick="copyOutput()">Copy Output</button>
   </div>
 </header>
+
+<div id="toast" class="toast"></div>
+
+<div class="modal-overlay" id="modalOverlay">
+  <div class="modal" id="modal">
+    <h3 id="modalTitle"></h3>
+    <input type="text" id="modalInput" autocomplete="off">
+    <div class="modal-actions">
+      <button onclick="closeModal()">Cancel</button>
+      <button class="primary" id="modalConfirm">OK</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="confirmOverlay">
+  <div class="modal" id="confirmModal">
+    <h3 id="confirmTitle"></h3>
+    <div class="modal-actions">
+      <button onclick="closeConfirm()">Cancel</button>
+      <button class="danger" id="confirmBtn">Delete</button>
+    </div>
+  </div>
+</div>
 
 <div class="main">
   <div class="editors" id="editorsPane">
@@ -712,24 +897,257 @@ function resetEditors() {
   cssEditor.value = defaultCSS;
   updateHTML();
   updateCSS();
+  markUnsaved();
 }
 
 function copyOutput() {
-  const html = htmlEditor.value;
-  const css = cssEditor.value;
-  const full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + css + '\n<\/style>\n<\/head>\n<body>\n' + html + '\n<\/body>\n<\/html>';
-  navigator.clipboard.writeText(full).then(() => {
-    const btn = document.querySelector('.actions button:last-child');
-    btn.textContent = 'Copied!';
-    setTimeout(() => btn.textContent = 'Copy Output', 1500);
+  var h = htmlEditor.value;
+  var c = cssEditor.value;
+  var full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + c + '\n<\/style>\n<\/head>\n<body>\n' + h + '\n<\/body>\n<\/html>';
+  navigator.clipboard.writeText(full).then(function() { showToast('Copied to clipboard!', 'success'); });
+}
+
+// ---- Toast ----
+var toastTimer = null;
+function showToast(msg, type) {
+  var t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (type || 'info') + ' show';
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(function() { t.classList.remove('show'); }, 2000);
+}
+
+// ---- Modal helpers ----
+var modalCallback = null;
+function openModal(title, defaultVal, cb) {
+  var overlay = document.getElementById('modalOverlay');
+  document.getElementById('modalTitle').textContent = title;
+  var inp = document.getElementById('modalInput');
+  inp.value = defaultVal || '';
+  overlay.classList.add('show');
+  inp.focus();
+  inp.select();
+  modalCallback = cb;
+  document.getElementById('modalConfirm').onclick = function() {
+    var val = inp.value.trim();
+    closeModal();
+    if (val && cb) cb(val);
+  };
+  inp.onkeydown = function(e) {
+    if (e.key === 'Enter') { document.getElementById('modalConfirm').click(); }
+    if (e.key === 'Escape') { closeModal(); }
+  };
+}
+function closeModal() {
+  document.getElementById('modalOverlay').classList.remove('show');
+  modalCallback = null;
+}
+
+var confirmCallback = null;
+function openConfirm(title, cb) {
+  document.getElementById('confirmTitle').textContent = title;
+  document.getElementById('confirmOverlay').classList.add('show');
+  confirmCallback = cb;
+  document.getElementById('confirmBtn').onclick = function() {
+    closeConfirm();
+    if (cb) cb();
+  };
+}
+function closeConfirm() {
+  document.getElementById('confirmOverlay').classList.remove('show');
+  confirmCallback = null;
+}
+
+// Close modals on overlay click
+document.getElementById('modalOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeModal();
+});
+document.getElementById('confirmOverlay').addEventListener('click', function(e) {
+  if (e.target === this) closeConfirm();
+});
+
+// ---- Project CRUD (localStorage) ----
+var STORAGE_KEY = 'liveEditorProjects';
+var ACTIVE_KEY = 'liveEditorActiveId';
+var unsaved = false;
+
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e) { return []; }
+}
+function setProjects(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+function getActiveId() { return localStorage.getItem(ACTIVE_KEY) || ''; }
+function setActiveId(id) { localStorage.setItem(ACTIVE_KEY, id || ''); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+function markUnsaved() {
+  unsaved = true;
+  document.getElementById('unsavedDot').classList.add('show');
+}
+function markSaved() {
+  unsaved = false;
+  document.getElementById('unsavedDot').classList.remove('show');
+}
+
+function renderProjectList() {
+  var sel = document.getElementById('projectSelect');
+  var projects = getProjects();
+  var activeId = getActiveId();
+  sel.innerHTML = '';
+  if (projects.length === 0) {
+    var o = document.createElement('option');
+    o.value = '';
+    o.textContent = '-- No projects --';
+    o.disabled = true;
+    o.selected = true;
+    sel.appendChild(o);
+    return;
+  }
+  projects.forEach(function(p) {
+    var o = document.createElement('option');
+    o.value = p.id;
+    o.textContent = p.name + (p.updatedAt ? ' \u00b7 ' + new Date(p.updatedAt).toLocaleDateString() : '');
+    if (p.id === activeId) o.selected = true;
+    sel.appendChild(o);
   });
 }
 
-// Init
-htmlEditor.value = defaultHTML;
-cssEditor.value = defaultCSS;
-updateHTML();
-updateCSS();
+// CREATE
+function newProject() {
+  openModal('New project name:', 'Untitled', function(name) {
+    var projects = getProjects();
+    var project = {
+      id: genId(),
+      name: name,
+      html: defaultHTML,
+      css: defaultCSS,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    projects.push(project);
+    setProjects(projects);
+    setActiveId(project.id);
+    htmlEditor.value = project.html;
+    cssEditor.value = project.css;
+    updateHTML();
+    updateCSS();
+    renderProjectList();
+    markSaved();
+    showToast('Project created!', 'success');
+  });
+}
+
+// READ
+function loadProject(id) {
+  var projects = getProjects();
+  var project = projects.find(function(p) { return p.id === id; });
+  if (!project) return;
+  setActiveId(id);
+  htmlEditor.value = project.html;
+  cssEditor.value = project.css;
+  updateHTML();
+  updateCSS();
+  markSaved();
+}
+
+document.getElementById('projectSelect').addEventListener('change', function() {
+  if (unsaved) {
+    openConfirm('You have unsaved changes. Switch anyway?', function() {
+      document.getElementById('confirmBtn').textContent = 'Delete';
+      loadProject(document.getElementById('projectSelect').value);
+    });
+    // Reset select to current project if cancelled
+    var confirmBtn = document.getElementById('confirmBtn');
+    confirmBtn.textContent = 'Switch';
+    var savedHandler = confirmBtn.onclick;
+    confirmBtn.onclick = function() {
+      closeConfirm();
+      loadProject(document.getElementById('projectSelect').value);
+    };
+    return;
+  }
+  loadProject(this.value);
+});
+
+// UPDATE
+function saveProject() {
+  var activeId = getActiveId();
+  var projects = getProjects();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project) {
+    newProject();
+    return;
+  }
+  project.html = htmlEditor.value;
+  project.css = cssEditor.value;
+  project.updatedAt = new Date().toISOString();
+  setProjects(projects);
+  renderProjectList();
+  markSaved();
+  showToast('Project saved!', 'success');
+}
+
+function renameProject() {
+  var activeId = getActiveId();
+  var projects = getProjects();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project) { showToast('No project selected', 'error'); return; }
+  openModal('Rename project:', project.name, function(name) {
+    project.name = name;
+    project.updatedAt = new Date().toISOString();
+    setProjects(projects);
+    renderProjectList();
+    showToast('Project renamed!', 'success');
+  });
+}
+
+// DELETE
+function deleteProject() {
+  var activeId = getActiveId();
+  var projects = getProjects();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project) { showToast('No project to delete', 'error'); return; }
+  openConfirm('Delete "' + project.name + '"? This cannot be undone.', function() {
+    projects = projects.filter(function(p) { return p.id !== activeId; });
+    setProjects(projects);
+    if (projects.length > 0) {
+      loadProject(projects[projects.length - 1].id);
+    } else {
+      setActiveId('');
+      htmlEditor.value = defaultHTML;
+      cssEditor.value = defaultCSS;
+      updateHTML();
+      updateCSS();
+    }
+    renderProjectList();
+    markSaved();
+    showToast('Project deleted', 'info');
+  });
+}
+
+// Track unsaved changes
+htmlEditor.addEventListener('input', function() { markUnsaved(); });
+cssEditor.addEventListener('input', function() { markUnsaved(); });
+
+// Ctrl+S to save
+document.addEventListener('keydown', function(e) {
+  if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+    e.preventDefault();
+    saveProject();
+  }
+});
+
+// ---- Init ----
+renderProjectList();
+var initId = getActiveId();
+if (initId) {
+  loadProject(initId);
+} else {
+  htmlEditor.value = defaultHTML;
+  cssEditor.value = defaultCSS;
+  updateHTML();
+  updateCSS();
+}
 </script>
 </body>
 </html>
