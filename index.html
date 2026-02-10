@@ -1125,11 +1125,34 @@ function deleteProject() {
   });
 }
 
-// Track unsaved changes
-htmlEditor.addEventListener('input', function() { markUnsaved(); });
-cssEditor.addEventListener('input', function() { markUnsaved(); });
+// ---- Auto-save draft to localStorage (debounced) ----
+var DRAFT_KEY = 'liveEditorDraft';
+var autoSaveTimer = null;
 
-// Ctrl+S to save
+function saveDraft() {
+  localStorage.setItem(DRAFT_KEY, JSON.stringify({
+    html: htmlEditor.value,
+    css: cssEditor.value,
+    activeId: getActiveId(),
+    ts: Date.now()
+  }));
+}
+
+function loadDraft() {
+  try { return JSON.parse(localStorage.getItem(DRAFT_KEY)); }
+  catch(e) { return null; }
+}
+
+function autoSave() {
+  clearTimeout(autoSaveTimer);
+  autoSaveTimer = setTimeout(saveDraft, 500);
+}
+
+// Track unsaved changes + auto-save draft
+htmlEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
+cssEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
+
+// Ctrl+S to save project
 document.addEventListener('keydown', function(e) {
   if ((e.ctrlKey || e.metaKey) && e.key === 's') {
     e.preventDefault();
@@ -1140,8 +1163,30 @@ document.addEventListener('keydown', function(e) {
 // ---- Init ----
 renderProjectList();
 var initId = getActiveId();
+var draft = loadDraft();
+
 if (initId) {
+  // Load saved project first
   loadProject(initId);
+  // If there's a newer draft for this project, restore it
+  if (draft && draft.activeId === initId && draft.ts) {
+    var projects = getProjects();
+    var proj = projects.find(function(p) { return p.id === initId; });
+    var projTime = proj && proj.updatedAt ? new Date(proj.updatedAt).getTime() : 0;
+    if (draft.ts > projTime) {
+      htmlEditor.value = draft.html;
+      cssEditor.value = draft.css;
+      updateHTML();
+      updateCSS();
+      if (draft.html !== proj.html || draft.css !== proj.css) markUnsaved();
+    }
+  }
+} else if (draft) {
+  // No active project but there's a draft — restore it
+  htmlEditor.value = draft.html || defaultHTML;
+  cssEditor.value = draft.css || defaultCSS;
+  updateHTML();
+  updateCSS();
 } else {
   htmlEditor.value = defaultHTML;
   cssEditor.value = defaultCSS;
