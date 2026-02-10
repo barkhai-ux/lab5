@@ -259,57 +259,12 @@ const htmlLines = document.getElementById('htmlLines');
 const cssLines = document.getElementById('cssLines');
 const preview = document.getElementById('preview');
 
-const defaultHTML = `<div class="card">
-  <h1>Hello World!</h1>
-  <p>Start editing to see changes live.</p>
-  <button class="btn">Click Me</button>
-</div>`;
+const defaultHTML = '<div class="card">\n  <h1>Hello World!<\/h1>\n  <p>Start editing to see changes live.<\/p>\n  <button class="btn">Click Me<\/button>\n<\/div>';
 
-const defaultCSS = `body {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  min-height: 100vh;
-  margin: 0;
-  background: #f0f0f0;
-  font-family: sans-serif;
-}
-
-.card {
-  background: white;
-  padding: 40px;
-  border-radius: 12px;
-  box-shadow: 0 4px 24px rgba(0,0,0,0.1);
-  text-align: center;
-}
-
-h1 {
-  color: #333;
-  margin-bottom: 10px;
-}
-
-p {
-  color: #666;
-  margin-bottom: 20px;
-}
-
-.btn {
-  background: #6c5ce7;
-  color: white;
-  border: none;
-  padding: 10px 28px;
-  border-radius: 6px;
-  font-size: 16px;
-  cursor: pointer;
-  transition: background 0.2s;
-}
-
-.btn:hover {
-  background: #5a4bd1;
-}`;
+const defaultCSS = 'body {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: #f0f0f0;\n  font-family: sans-serif;\n}\n\n.card {\n  background: white;\n  padding: 40px;\n  border-radius: 12px;\n  box-shadow: 0 4px 24px rgba(0,0,0,0.1);\n  text-align: center;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 10px;\n}\n\np {\n  color: #666;\n  margin-bottom: 20px;\n}\n\n.btn {\n  background: #6c5ce7;\n  color: white;\n  border: none;\n  padding: 10px 28px;\n  border-radius: 6px;\n  font-size: 16px;\n  cursor: pointer;\n  transition: background 0.2s;\n}\n\n.btn:hover {\n  background: #5a4bd1;\n}';
 
 function escapeHTML(str) {
-  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return str.replace(/&/g, '&amp;').replace(/\x3c/g, '&lt;').replace(/>/g, '&gt;');
 }
 
 // ---- HTML Syntax Highlighting ----
@@ -474,8 +429,8 @@ function updateLineNumbers(text, el) {
 }
 
 function syncScroll(textarea, pre, lineNums) {
-  pre.parentElement.scrollTop = textarea.scrollTop;
-  pre.parentElement.scrollLeft = textarea.scrollLeft;
+  pre.scrollTop = textarea.scrollTop;
+  pre.scrollLeft = textarea.scrollLeft;
   lineNums.style.transform = `translateY(${-textarea.scrollTop}px)`;
 }
 
@@ -484,7 +439,7 @@ function updatePreview() {
   const css = cssEditor.value;
   const doc = preview.contentDocument || preview.contentWindow.document;
   doc.open();
-  doc.write(`<!DOCTYPE html><html><head><style>${css}</style></head><body>${html}</body></html>`);
+  doc.write('<!DOCTYPE html><html><head><style>' + css + '<\/style><\/head><body>' + html + '<\/body><\/html>');
   doc.close();
 }
 
@@ -532,6 +487,7 @@ resizer.addEventListener('mousedown', (e) => {
   resizer.classList.add('active');
   document.body.style.cursor = 'col-resize';
   document.body.style.userSelect = 'none';
+  preview.style.pointerEvents = 'none';
   e.preventDefault();
 });
 
@@ -541,10 +497,8 @@ document.addEventListener('mousemove', (e) => {
   const rect = container.getBoundingClientRect();
   const ratio = (e.clientX - rect.left) / rect.width;
   const clamped = Math.max(0.2, Math.min(0.8, ratio));
-  editorsPane.style.flex = 'none';
-  previewPane.style.flex = 'none';
-  editorsPane.style.width = (clamped * 100) + '%';
-  previewPane.style.width = ((1 - clamped) * 100) + '%';
+  editorsPane.style.flex = String(clamped);
+  previewPane.style.flex = String(1 - clamped);
 });
 
 document.addEventListener('mouseup', () => {
@@ -553,6 +507,7 @@ document.addEventListener('mouseup', () => {
     resizer.classList.remove('active');
     document.body.style.cursor = '';
     document.body.style.userSelect = '';
+    preview.style.pointerEvents = '';
   }
 });
 
@@ -566,7 +521,7 @@ function resetEditors() {
 function copyOutput() {
   const html = htmlEditor.value;
   const css = cssEditor.value;
-  const full = `<!DOCTYPE html>\n<html>\n<head>\n<style>\n${css}\n</style>\n</head>\n<body>\n${html}\n</body>\n</html>`;
+  const full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + css + '\n<\/style>\n<\/head>\n<body>\n' + html + '\n<\/body>\n<\/html>';
   navigator.clipboard.writeText(full).then(() => {
     const btn = document.querySelector('.actions button:last-child');
     btn.textContent = 'Copied!';
