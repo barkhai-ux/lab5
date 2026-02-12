@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Live HTML & CSS Editor</title>
+<title>Live HTML, CSS & JS Editor</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style>
   * { margin: 0; padding: 0; box-sizing: border-box; }
@@ -98,6 +98,7 @@
 
   .panel-header .dot.html { background: #fab387; }
   .panel-header .dot.css { background: #89b4fa; }
+  .panel-header .dot.js { background: #f9e2af; }
 
   .editor-wrap {
     flex: 1;
@@ -155,11 +156,11 @@
     z-index: 3;
     padding: 12px 8px 12px 0;
     text-align: right;
+    white-space: pre;
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
     font-size: 14px;
     line-height: 1.6;
     color: #585b70;
-    overflow: hidden;
     pointer-events: none;
     border-right: 1px solid #313244;
     user-select: none;
@@ -179,6 +180,94 @@
     flex: 1;
     border: none;
     background: #fff;
+  }
+
+  .console-panel {
+    height: 150px;
+    min-height: 150px;
+    background: #181825;
+    border-top: 1px solid #313244;
+    display: flex;
+    flex-direction: column;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+  }
+
+  .console-panel .panel-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 6px 14px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #a6adc8;
+    border-bottom: 1px solid #313244;
+    background: #181825;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+  }
+
+  .console-panel .panel-header button {
+    margin-left: auto;
+    background: #313244;
+    color: #cdd6f4;
+    border: 1px solid #45475a;
+    padding: 2px 10px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 11px;
+    transition: background 0.2s;
+  }
+
+  .console-panel .panel-header button:hover {
+    background: #45475a;
+  }
+
+  .dot.console { background: #f38ba8; }
+
+  .console-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0;
+  }
+
+  .console-output::-webkit-scrollbar { width: 4px; }
+  .console-output::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+
+  .console-entry {
+    padding: 4px 12px;
+    border-bottom: 1px solid #252536;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #cdd6f4;
+    word-break: break-all;
+    white-space: pre-wrap;
+  }
+
+  .console-entry.warn {
+    color: #f9e2af;
+    background: rgba(249, 226, 175, 0.05);
+  }
+
+  .console-entry.error {
+    color: #f38ba8;
+    background: rgba(243, 139, 168, 0.05);
+  }
+
+  .console-entry.info {
+    color: #89b4fa;
+  }
+
+  .console-entry .console-timestamp {
+    color: #585b70;
+    margin-right: 8px;
+    font-size: 10px;
+  }
+
+  .console-empty {
+    color: #585b70;
+    font-size: 12px;
+    padding: 12px;
+    text-align: center;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   }
 
   .resizer {
@@ -475,6 +564,15 @@
   .hl-css-comment { color: #585b70; font-style: italic; }
   .hl-css-atrule { color: #cba6f7; }
   .hl-css-important { color: #f38ba8; font-weight: bold; }
+  .hl-js-kw { color: #cba6f7; }
+  .hl-js-str { color: #a6e3a1; }
+  .hl-js-num { color: #fab387; }
+  .hl-js-comment { color: #585b70; font-style: italic; }
+  .hl-js-fn { color: #89b4fa; }
+  .hl-js-punct { color: #6c7086; }
+  .hl-js-regex { color: #f5c2e7; }
+  .hl-js-templ { color: #a6e3a1; }
+  .hl-js-obj { color: #f9e2af; }
 </style>
 </head>
 <body>
@@ -482,7 +580,7 @@
 <header>
   <div class="header-left">
     <button class="sidebar-toggle" id="sidebarToggle" title="Toggle projects">&#9776;</button>
-    <h1>&#9998; Live HTML &amp; CSS Editor</h1>
+    <h1>&#9998; Live HTML, CSS &amp; JS Editor</h1>
     <span class="unsaved-dot" id="unsavedDot" title="Unsaved changes"></span>
   </div>
   <div class="actions">
@@ -544,6 +642,15 @@
         <textarea id="cssEditor" spellcheck="false"></textarea>
       </div>
     </div>
+    <!-- JS Editor -->
+    <div class="editor-panel">
+      <div class="panel-header"><span class="dot js"></span>JS</div>
+      <div class="editor-wrap">
+        <div class="line-numbers" id="jsLines">1</div>
+        <pre><code id="jsHighlight"></code></pre>
+        <textarea id="jsEditor" spellcheck="false"></textarea>
+      </div>
+    </div>
   </div>
 
   <div class="resizer" id="resizer"></div>
@@ -551,21 +658,36 @@
   <div class="preview-panel" id="previewPane">
     <div class="panel-header"><span class="dot"></span>Preview</div>
     <iframe id="preview"></iframe>
+    <div class="console-panel">
+      <div class="panel-header">
+        <span class="dot console"></span>Console
+        <button onclick="clearConsole()">Clear</button>
+      </div>
+      <div class="console-output" id="consoleOutput">
+        <div class="console-empty">Console output will appear here...</div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script>
 const htmlEditor = document.getElementById('htmlEditor');
 const cssEditor = document.getElementById('cssEditor');
+const jsEditor = document.getElementById('jsEditor');
 const htmlHighlight = document.getElementById('htmlHighlight');
 const cssHighlight = document.getElementById('cssHighlight');
+const jsHighlight = document.getElementById('jsHighlight');
 const htmlLines = document.getElementById('htmlLines');
 const cssLines = document.getElementById('cssLines');
+const jsLines = document.getElementById('jsLines');
 const preview = document.getElementById('preview');
+const consoleOutput = document.getElementById('consoleOutput');
 
 const defaultHTML = '<div class="card">\n  <h1>Hello World!<\/h1>\n  <p>Start editing to see changes live.<\/p>\n  <button class="btn">Click Me<\/button>\n<\/div>';
 
 const defaultCSS = 'body {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: #f0f0f0;\n  font-family: sans-serif;\n}\n\n.card {\n  background: white;\n  padding: 40px;\n  border-radius: 12px;\n  box-shadow: 0 4px 24px rgba(0,0,0,0.1);\n  text-align: center;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 10px;\n}\n\np {\n  color: #666;\n  margin-bottom: 20px;\n}\n\n.btn {\n  background: #6c5ce7;\n  color: white;\n  border: none;\n  padding: 10px 28px;\n  border-radius: 6px;\n  font-size: 16px;\n  cursor: pointer;\n  transition: background 0.2s;\n}\n\n.btn:hover {\n  background: #5a4bd1;\n}';
+
+const defaultJS = 'const btn = document.querySelector(\'.btn\');\nlet count = 0;\n\nbtn.addEventListener(\'click\', function() {\n  count++;\n  btn.textContent = \'Clicked \' + count + \' times\';\n});';
 
 function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/\x3c/g, '&lt;').replace(/>/g, '&gt;');
@@ -725,6 +847,79 @@ function highlightCSS(code) {
   return result;
 }
 
+// ---- JS Syntax Highlighting ----
+function highlightJS(code) {
+  var jsKeywords = /^(var|let|const|function|return|if|else|for|while|do|switch|case|break|continue|new|this|typeof|instanceof|in|of|class|extends|super|import|export|default|from|try|catch|finally|throw|async|await|yield|delete|void|null|undefined|true|false|NaN|Infinity)$/;
+  var result = '';
+  var i = 0;
+  while (i < code.length) {
+    // Single-line comment
+    if (code[i] === '/' && code[i+1] === '/') {
+      var end = code.indexOf('\n', i);
+      if (end === -1) end = code.length;
+      result += '<span class="hl-js-comment">' + escapeHTML(code.slice(i, end)) + '</span>';
+      i = end;
+    }
+    // Multi-line comment
+    else if (code[i] === '/' && code[i+1] === '*') {
+      var end = code.indexOf('*/', i + 2);
+      if (end === -1) end = code.length - 2;
+      result += '<span class="hl-js-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
+      i = end + 2;
+    }
+    // Template literal
+    else if (code[i] === '`') {
+      var s = '`'; i++;
+      while (i < code.length && code[i] !== '`') {
+        if (code[i] === '\\') { s += code[i] + (code[i+1] || ''); i += 2; }
+        else { s += code[i]; i++; }
+      }
+      if (i < code.length) { s += '`'; i++; }
+      result += '<span class="hl-js-templ">' + escapeHTML(s) + '</span>';
+    }
+    // Strings
+    else if (code[i] === '"' || code[i] === "'") {
+      var q = code[i]; var s = q; i++;
+      while (i < code.length && code[i] !== q && code[i] !== '\n') {
+        if (code[i] === '\\') { s += code[i] + (code[i+1] || ''); i += 2; }
+        else { s += code[i]; i++; }
+      }
+      if (i < code.length && code[i] === q) { s += q; i++; }
+      result += '<span class="hl-js-str">' + escapeHTML(s) + '</span>';
+    }
+    // Numbers
+    else if (/[0-9]/.test(code[i]) && (i === 0 || !/[a-zA-Z_$]/.test(code[i-1]))) {
+      var num = '';
+      while (i < code.length && /[0-9a-fA-FxXoObBeE._]/.test(code[i])) { num += code[i]; i++; }
+      result += '<span class="hl-js-num">' + escapeHTML(num) + '</span>';
+    }
+    // Identifiers and keywords
+    else if (/[a-zA-Z_$]/.test(code[i])) {
+      var word = '';
+      while (i < code.length && /[a-zA-Z0-9_$]/.test(code[i])) { word += code[i]; i++; }
+      if (jsKeywords.test(word)) {
+        result += '<span class="hl-js-kw">' + escapeHTML(word) + '</span>';
+      } else if (i < code.length && code[i] === '(') {
+        result += '<span class="hl-js-fn">' + escapeHTML(word) + '</span>';
+      } else if (i < code.length && code[i] === '.') {
+        result += '<span class="hl-js-obj">' + escapeHTML(word) + '</span>';
+      } else {
+        result += escapeHTML(word);
+      }
+    }
+    // Punctuation
+    else if (/[{}()\[\];:.,=<>!&|?+\-*/%~^]/.test(code[i])) {
+      result += '<span class="hl-js-punct">' + escapeHTML(code[i]) + '</span>';
+      i++;
+    }
+    else {
+      result += escapeHTML(code[i]);
+      i++;
+    }
+  }
+  return result;
+}
+
 function updateLineNumbers(text, el) {
   const count = text.split('\n').length;
   let nums = '';
@@ -738,12 +933,65 @@ function syncScroll(textarea, pre, lineNums) {
   lineNums.style.transform = `translateY(${-textarea.scrollTop}px)`;
 }
 
+// ---- Console Panel ----
+window.addConsoleEntry = function(type) {
+  var args = Array.prototype.slice.call(arguments, 1);
+  // Remove empty placeholder if present
+  var empty = consoleOutput.querySelector('.console-empty');
+  if (empty) empty.remove();
+
+  var entry = document.createElement('div');
+  entry.className = 'console-entry ' + type;
+
+  var ts = document.createElement('span');
+  ts.className = 'console-timestamp';
+  var now = new Date();
+  ts.textContent = now.toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+  entry.appendChild(ts);
+
+  var parts = [];
+  for (var i = 0; i < args.length; i++) {
+    var arg = args[i];
+    if (arg === null) { parts.push('null'); }
+    else if (arg === undefined) { parts.push('undefined'); }
+    else if (typeof arg === 'object') {
+      try { parts.push(JSON.stringify(arg, null, 2)); }
+      catch(e) { parts.push(String(arg)); }
+    } else {
+      parts.push(String(arg));
+    }
+  }
+  entry.appendChild(document.createTextNode(parts.join(' ')));
+  consoleOutput.appendChild(entry);
+  consoleOutput.scrollTop = consoleOutput.scrollHeight;
+};
+
+window.clearConsole = function() {
+  consoleOutput.innerHTML = '<div class="console-empty">Console output will appear here...</div>';
+};
+
 function updatePreview() {
   const html = htmlEditor.value;
   const css = cssEditor.value;
+  const js = jsEditor.value;
+  // Clear console on each preview update
+  clearConsole();
+  var consoleOverride = '(function(){'
+    + 'var _log=console.log,_warn=console.warn,_error=console.error,_info=console.info,_clear=console.clear;'
+    + 'function _send(t,a){try{parent.addConsoleEntry.apply(null,[t].concat(Array.prototype.slice.call(a)));}catch(e){}}'
+    + 'console.log=function(){_send("log",arguments);_log.apply(console,arguments);};'
+    + 'console.warn=function(){_send("warn",arguments);_warn.apply(console,arguments);};'
+    + 'console.error=function(){_send("error",arguments);_error.apply(console,arguments);};'
+    + 'console.info=function(){_send("info",arguments);_info.apply(console,arguments);};'
+    + 'console.clear=function(){try{parent.clearConsole();}catch(e){}_clear.apply(console,arguments);};'
+    + 'window.onerror=function(msg,src,line,col,err){'
+    + 'var detail=msg;if(line)detail+=" (line "+line;if(col)detail+=":"+col;if(line)detail+=")";'
+    + 'try{parent.addConsoleEntry("error",detail);}catch(e){}'
+    + '};'
+    + '})();';
   const doc = preview.contentDocument || preview.contentWindow.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html><head><style>' + css + '<\/style><\/head><body>' + html + '<\/body><\/html>');
+  doc.write('<!DOCTYPE html><html><head><style>' + css + '<\/style><\/head><body>' + html + '<script>' + consoleOverride + '<\/script><script>' + js + '<\/script><\/body><\/html>');
   doc.close();
 }
 
@@ -756,6 +1004,12 @@ function updateHTML() {
 function updateCSS() {
   cssHighlight.innerHTML = highlightCSS(cssEditor.value) + '\n';
   updateLineNumbers(cssEditor.value, cssLines);
+  updatePreview();
+}
+
+function updateJS() {
+  jsHighlight.innerHTML = highlightJS(jsEditor.value) + '\n';
+  updateLineNumbers(jsEditor.value, jsLines);
   updatePreview();
 }
 
@@ -943,7 +1197,7 @@ function handleEnter(e) {
   } else {
     var extra = '';
     if (before.match(/<[a-zA-Z][^>]*>\s*$/) && ta === htmlEditor) extra = '  ';
-    if (before.match(/\{\s*$/) && ta === cssEditor) extra = '  ';
+    if (before.match(/\{\s*$/) && (ta === cssEditor || ta === jsEditor)) extra = '  ';
     ta.value = before + '\n' + indent + extra + after;
     ta.selectionStart = ta.selectionEnd = pos + 1 + indent.length + extra.length;
   }
@@ -966,15 +1220,20 @@ function handleBrace(e) {
 
 htmlEditor.addEventListener('input', updateHTML);
 cssEditor.addEventListener('input', updateCSS);
+jsEditor.addEventListener('input', updateJS);
 htmlEditor.addEventListener('keydown', handleTab);
 cssEditor.addEventListener('keydown', handleTab);
+jsEditor.addEventListener('keydown', handleTab);
 htmlEditor.addEventListener('keydown', handleAutoClose);
 htmlEditor.addEventListener('keydown', handleEnter);
 cssEditor.addEventListener('keydown', handleEnter);
+jsEditor.addEventListener('keydown', handleEnter);
 cssEditor.addEventListener('keydown', handleBrace);
+jsEditor.addEventListener('keydown', handleBrace);
 
 htmlEditor.addEventListener('scroll', () => syncScroll(htmlEditor, htmlHighlight.parentElement, htmlLines));
 cssEditor.addEventListener('scroll', () => syncScroll(cssEditor, cssHighlight.parentElement, cssLines));
+jsEditor.addEventListener('scroll', () => syncScroll(jsEditor, jsHighlight.parentElement, jsLines));
 
 // Resizer
 const resizer = document.getElementById('resizer');
@@ -1014,15 +1273,18 @@ document.addEventListener('mouseup', () => {
 function resetEditors() {
   htmlEditor.value = defaultHTML;
   cssEditor.value = defaultCSS;
+  jsEditor.value = defaultJS;
   updateHTML();
   updateCSS();
+  updateJS();
   markUnsaved();
 }
 
 function copyOutput() {
   var h = htmlEditor.value;
   var c = cssEditor.value;
-  var full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + c + '\n<\/style>\n<\/head>\n<body>\n' + h + '\n<\/body>\n<\/html>';
+  var j = jsEditor.value;
+  var full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + c + '\n<\/style>\n<\/head>\n<body>\n' + h + '\n<script>\n' + j + '\n<\/script>\n<\/body>\n<\/html>';
   navigator.clipboard.writeText(full).then(function() { showToast('Copied to clipboard!', 'success'); });
 }
 
@@ -1030,11 +1292,13 @@ function copyOutput() {
 function downloadZip() {
   var h = htmlEditor.value;
   var c = cssEditor.value;
-  var htmlContent = '<!DOCTYPE html>\n<html>\n<head>\n<link rel="stylesheet" href="style.css">\n<\/head>\n<body>\n' + h + '\n<\/body>\n<\/html>';
+  var j = jsEditor.value;
+  var htmlContent = '<!DOCTYPE html>\n<html>\n<head>\n<link rel="stylesheet" href="style.css">\n<\/head>\n<body>\n' + h + '\n<script src="script.js"><\/script>\n<\/body>\n<\/html>';
 
   var zip = new JSZip();
   zip.file('index.html', htmlContent);
   zip.file('style.css', c);
+  zip.file('script.js', j);
 
   var projects = getProjects();
   var activeId = getActiveId();
@@ -1193,6 +1457,7 @@ function newProject() {
       name: name,
       html: defaultHTML,
       css: defaultCSS,
+      js: defaultJS,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
@@ -1201,8 +1466,10 @@ function newProject() {
     setActiveId(project.id);
     htmlEditor.value = project.html;
     cssEditor.value = project.css;
+    jsEditor.value = project.js;
     updateHTML();
     updateCSS();
+    updateJS();
     renderProjectList();
     markSaved();
     showToast('Project created!', 'success');
@@ -1217,8 +1484,10 @@ function loadProject(id) {
   setActiveId(id);
   htmlEditor.value = project.html;
   cssEditor.value = project.css;
+  jsEditor.value = project.js || defaultJS;
   updateHTML();
   updateCSS();
+  updateJS();
   markSaved();
 }
 
@@ -1233,6 +1502,7 @@ function saveProject() {
   }
   project.html = htmlEditor.value;
   project.css = cssEditor.value;
+  project.js = jsEditor.value;
   project.updatedAt = new Date().toISOString();
   setProjects(projects);
   renderProjectList();
@@ -1278,8 +1548,10 @@ function deleteProjectById(id) {
         setActiveId('');
         htmlEditor.value = defaultHTML;
         cssEditor.value = defaultCSS;
+        jsEditor.value = defaultJS;
         updateHTML();
         updateCSS();
+        updateJS();
       }
     }
     renderProjectList();
@@ -1296,6 +1568,7 @@ function saveDraft() {
   localStorage.setItem(DRAFT_KEY, JSON.stringify({
     html: htmlEditor.value,
     css: cssEditor.value,
+    js: jsEditor.value,
     activeId: getActiveId(),
     ts: Date.now()
   }));
@@ -1314,6 +1587,7 @@ function autoSave() {
 // Track unsaved changes + auto-save draft
 htmlEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
 cssEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
+jsEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
 
 // Ctrl+S to save project
 document.addEventListener('keydown', function(e) {
@@ -1339,22 +1613,28 @@ if (initId) {
     if (draft.ts > projTime) {
       htmlEditor.value = draft.html;
       cssEditor.value = draft.css;
+      jsEditor.value = draft.js || defaultJS;
       updateHTML();
       updateCSS();
-      if (draft.html !== proj.html || draft.css !== proj.css) markUnsaved();
+      updateJS();
+      if (draft.html !== proj.html || draft.css !== proj.css || (draft.js || '') !== (proj.js || '')) markUnsaved();
     }
   }
 } else if (draft) {
   // No active project but there's a draft — restore it
   htmlEditor.value = draft.html || defaultHTML;
   cssEditor.value = draft.css || defaultCSS;
+  jsEditor.value = draft.js || defaultJS;
   updateHTML();
   updateCSS();
+  updateJS();
 } else {
   htmlEditor.value = defaultHTML;
   cssEditor.value = defaultCSS;
+  jsEditor.value = defaultJS;
   updateHTML();
   updateCSS();
+  updateJS();
 }
 </script>
 </body>
