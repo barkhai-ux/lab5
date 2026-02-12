@@ -601,6 +601,23 @@
     border-left-style: dashed;
   }
 
+  .file-item.dragging,
+  .folder-item.dragging {
+    opacity: 0.4;
+  }
+
+  .folder-item.drag-over {
+    background: rgba(166, 227, 161, 0.15);
+    outline: 1px dashed #a6e3a1;
+    outline-offset: -1px;
+  }
+
+  .file-tree.drag-over-root {
+    background: rgba(166, 227, 161, 0.08);
+    outline: 1px dashed #a6e3a1;
+    outline-offset: -2px;
+  }
+
   .file-item .file-actions {
     position: absolute;
     right: 6px;
@@ -932,6 +949,7 @@ var activeFileId = null;  // currently displayed file ID
 var collapsedFolders = {}; // track collapsed folder IDs
 var selectedTreeId = null; // selected file/folder in tree for copy/paste
 var clipboard = null;      // { id, mode: 'copy'|'cut' } for file clipboard
+var draggedFileId = null;  // file/folder being dragged
 
 var defaultHTML = '<div class="card">\n  <h1>Hello World!<\/h1>\n  <p>Start editing to see changes live.<\/p>\n  <button class="btn">Click Me<\/button>\n<\/div>';
 
@@ -1427,6 +1445,29 @@ function renderFileTree() {
   }
   tree.innerHTML = '';
   renderNodes(tree, null, project.files);
+  // Root-level drop zone: drop files here to move them to root
+  tree.addEventListener('dragover', function(e) {
+    if (!draggedFileId) return;
+    // Only highlight if dragging over the tree background, not a folder
+    if (e.target === tree || e.target.classList.contains('sidebar-empty')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      tree.classList.add('drag-over-root');
+    }
+  });
+  tree.addEventListener('dragleave', function(e) {
+    if (e.target === tree || !tree.contains(e.relatedTarget)) {
+      tree.classList.remove('drag-over-root');
+    }
+  });
+  tree.addEventListener('drop', function(e) {
+    e.preventDefault();
+    tree.classList.remove('drag-over-root');
+    if (draggedFileId) {
+      moveFileToParent(draggedFileId, null);
+      draggedFileId = null;
+    }
+  });
 }
 
 function renderNodes(container, parentId, files) {
@@ -1445,6 +1486,8 @@ function renderNodes(container, parentId, files) {
     if (folder.id === selectedTreeId) folderClasses += ' selected';
     if (clipboard && clipboard.id === folder.id) folderClasses += ' clipboard-' + clipboard.mode;
     row.className = folderClasses;
+    row.setAttribute('draggable', 'true');
+    row.setAttribute('data-file-id', folder.id);
     row.innerHTML = '<span class="folder-arrow">' + (isCollapsed ? '&#9656;' : '&#9662;') + '</span>'
       + '<span>' + escapeHTML(folder.name) + '</span>'
       + '<div class="file-actions">'
@@ -1457,6 +1500,39 @@ function renderNodes(container, parentId, files) {
       selectedTreeId = folder.id;
       collapsedFolders[folder.id] = !collapsedFolders[folder.id];
       renderFileTree();
+    });
+    // Drag start
+    row.addEventListener('dragstart', function(e) {
+      draggedFileId = folder.id;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', folder.id);
+      setTimeout(function() { row.classList.add('dragging'); }, 0);
+    });
+    row.addEventListener('dragend', function() {
+      draggedFileId = null;
+      row.classList.remove('dragging');
+      // Clean up all drag-over highlights
+      document.querySelectorAll('.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+      document.querySelectorAll('.drag-over-root').forEach(function(el) { el.classList.remove('drag-over-root'); });
+    });
+    // Drop target: folders accept drops
+    row.addEventListener('dragover', function(e) {
+      if (!draggedFileId || draggedFileId === folder.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      row.classList.add('drag-over');
+    });
+    row.addEventListener('dragleave', function() {
+      row.classList.remove('drag-over');
+    });
+    row.addEventListener('drop', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+      row.classList.remove('drag-over');
+      if (draggedFileId && draggedFileId !== folder.id) {
+        moveFileToParent(draggedFileId, folder.id);
+      }
+      draggedFileId = null;
     });
     folderEl.appendChild(row);
 
@@ -1475,6 +1551,8 @@ function renderNodes(container, parentId, files) {
     if (file.id === selectedTreeId) fileClasses += ' selected';
     if (clipboard && clipboard.id === file.id) fileClasses += ' clipboard-' + clipboard.mode;
     row.className = fileClasses;
+    row.setAttribute('draggable', 'true');
+    row.setAttribute('data-file-id', file.id);
     var dotClass = getLangDotClass(file.name);
     row.innerHTML = '<span class="file-dot ' + dotClass + '"></span>'
       + '<span>' + escapeHTML(file.name) + '</span>'
@@ -1486,6 +1564,19 @@ function renderNodes(container, parentId, files) {
     row.addEventListener('click', function() {
       selectedTreeId = file.id;
       openFile(file.id);
+    });
+    // Drag start
+    row.addEventListener('dragstart', function(e) {
+      draggedFileId = file.id;
+      e.dataTransfer.effectAllowed = 'move';
+      e.dataTransfer.setData('text/plain', file.id);
+      setTimeout(function() { row.classList.add('dragging'); }, 0);
+    });
+    row.addEventListener('dragend', function() {
+      draggedFileId = null;
+      row.classList.remove('dragging');
+      document.querySelectorAll('.drag-over').forEach(function(el) { el.classList.remove('drag-over'); });
+      document.querySelectorAll('.drag-over-root').forEach(function(el) { el.classList.remove('drag-over-root'); });
     });
     container.appendChild(row);
   });
@@ -1719,6 +1810,42 @@ function pasteFromClipboard() {
     markUnsaved();
     showToast('Moved "' + source.name + '"', 'success');
   }
+}
+
+// ---- Drag & Drop: move file/folder to a new parent ----
+function moveFileToParent(fileId, newParentId) {
+  if (!fileId) return;
+  var projects = getProjects();
+  var activeId = getActiveId();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === fileId; });
+  if (!file) return;
+  // Can't drop onto itself
+  if (fileId === newParentId) return;
+  // Already in this folder
+  if (file.parentId === newParentId) return;
+  // If dropping into a folder, prevent dropping a folder into its own descendant
+  if (file.type === 'folder' && newParentId) {
+    var checkId = newParentId;
+    while (checkId) {
+      if (checkId === fileId) {
+        showToast('Cannot move folder into itself', 'error');
+        return;
+      }
+      var parentNode = project.files.find(function(f) { return f.id === checkId; });
+      checkId = parentNode ? parentNode.parentId : null;
+    }
+  }
+  file.name = getDeduplicatedName(file.name, newParentId, project.files);
+  file.parentId = newParentId;
+  project.updatedAt = new Date().toISOString();
+  setProjects(projects);
+  if (newParentId) collapsedFolders[newParentId] = false;
+  renderFileTree();
+  renderEditorTabs();
+  markUnsaved();
+  showToast('Moved "' + file.name + '"', 'success');
 }
 
 // ---- Void elements (self-closing) ----
