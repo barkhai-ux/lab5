@@ -66,16 +66,59 @@
     min-width: 0;
   }
 
-  .editor-panel {
-    flex: 1;
+  .editor-tabs {
     display: flex;
-    flex-direction: column;
-    min-height: 0;
+    background: #181825;
     border-bottom: 1px solid #313244;
+    flex-shrink: 0;
   }
 
-  .editor-panel:last-child {
-    border-bottom: none;
+  .editor-tab {
+    padding: 8px 18px;
+    font-size: 12px;
+    font-weight: 600;
+    color: #585b70;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    border: none;
+    background: none;
+    border-bottom: 2px solid transparent;
+    transition: color 0.2s, border-color 0.2s, background 0.2s;
+    position: relative;
+  }
+
+  .editor-tab:hover {
+    color: #a6adc8;
+    background: rgba(203, 166, 247, 0.05);
+  }
+
+  .editor-tab.active {
+    color: #cdd6f4;
+    border-bottom-color: #cba6f7;
+    background: #1e1e2e;
+  }
+
+  .editor-tab .dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+  }
+
+  .editor-tab .dot.html { background: #fab387; }
+  .editor-tab .dot.css { background: #89b4fa; }
+  .editor-tab .dot.js { background: #f9e2af; }
+
+  .editor-panel {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .editor-panel.active {
+    display: flex;
   }
 
   .panel-header {
@@ -624,9 +667,13 @@
   </div>
 
   <div class="editors" id="editorsPane">
+    <div class="editor-tabs">
+      <button class="editor-tab active" data-tab="html" onclick="switchTab('html')"><span class="dot html"></span>HTML</button>
+      <button class="editor-tab" data-tab="css" onclick="switchTab('css')"><span class="dot css"></span>CSS</button>
+      <button class="editor-tab" data-tab="js" onclick="switchTab('js')"><span class="dot js"></span>JS</button>
+    </div>
     <!-- HTML Editor -->
-    <div class="editor-panel">
-      <div class="panel-header"><span class="dot html"></span>HTML</div>
+    <div class="editor-panel active" id="panelHtml">
       <div class="editor-wrap">
         <div class="line-numbers" id="htmlLines">1</div>
         <pre><code id="htmlHighlight"></code></pre>
@@ -634,8 +681,7 @@
       </div>
     </div>
     <!-- CSS Editor -->
-    <div class="editor-panel">
-      <div class="panel-header"><span class="dot css"></span>CSS</div>
+    <div class="editor-panel" id="panelCss">
       <div class="editor-wrap">
         <div class="line-numbers" id="cssLines">1</div>
         <pre><code id="cssHighlight"></code></pre>
@@ -643,8 +689,7 @@
       </div>
     </div>
     <!-- JS Editor -->
-    <div class="editor-panel">
-      <div class="panel-header"><span class="dot js"></span>JS</div>
+    <div class="editor-panel" id="panelJs">
       <div class="editor-wrap">
         <div class="line-numbers" id="jsLines">1</div>
         <pre><code id="jsHighlight"></code></pre>
@@ -1216,6 +1261,15 @@ function handleBrace(e) {
   ta.value = before + '{}' + after;
   ta.selectionStart = ta.selectionEnd = pos + 1;
   ta.dispatchEvent(new Event('input'));
+}
+
+// ---- Tab Switching ----
+function switchTab(tab) {
+  var tabs = document.querySelectorAll('.editor-tab');
+  var panels = document.querySelectorAll('.editor-panel');
+  tabs.forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
+  panels.forEach(function(p) { p.classList.remove('active'); });
+  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
 }
 
 htmlEditor.addEventListener('input', updateHTML);
