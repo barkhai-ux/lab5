@@ -71,10 +71,15 @@
     background: #181825;
     border-bottom: 1px solid #313244;
     flex-shrink: 0;
+    overflow-x: auto;
   }
 
+  .editor-tabs::-webkit-scrollbar { height: 3px; }
+  .editor-tabs::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+
   .editor-tab {
-    padding: 8px 18px;
+    padding: 8px 12px;
+    padding-right: 28px;
     font-size: 12px;
     font-weight: 600;
     color: #585b70;
@@ -87,6 +92,8 @@
     border-bottom: 2px solid transparent;
     transition: color 0.2s, border-color 0.2s, background 0.2s;
     position: relative;
+    white-space: nowrap;
+    flex-shrink: 0;
   }
 
   .editor-tab:hover {
@@ -109,6 +116,28 @@
   .editor-tab .dot.html { background: #fab387; }
   .editor-tab .dot.css { background: #89b4fa; }
   .editor-tab .dot.js { background: #f9e2af; }
+  .editor-tab .dot.other { background: #a6adc8; }
+
+  .editor-tab .tab-close {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #585b70;
+    cursor: pointer;
+    font-size: 14px;
+    line-height: 1;
+    padding: 0 2px;
+    border-radius: 3px;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .editor-tab .tab-close:hover {
+    color: #f38ba8;
+    background: #313244;
+  }
 
   .editor-panel {
     flex: 1;
@@ -344,12 +373,34 @@
     pointer-events: none;
   }
 
+  .sidebar-section {
+    display: flex;
+    flex-direction: column;
+    border-bottom: 1px solid #313244;
+  }
+
+  .sidebar-section.files-section {
+    flex: 1;
+    border-bottom: none;
+    min-height: 0;
+  }
+
   .sidebar-header {
     padding: 12px 14px 10px;
     display: flex;
     align-items: center;
     justify-content: space-between;
     border-bottom: 1px solid #313244;
+    cursor: default;
+    flex-shrink: 0;
+  }
+
+  .sidebar-header.clickable {
+    cursor: pointer;
+  }
+
+  .sidebar-header.clickable:hover {
+    background: rgba(203, 166, 247, 0.05);
   }
 
   .sidebar-header h2 {
@@ -374,8 +425,18 @@
 
   .sidebar-header button:hover { background: #b491e0; }
 
+  .sidebar-header .file-actions-bar {
+    display: flex;
+    gap: 4px;
+    margin-left: auto;
+  }
+
+  .sidebar-header .file-actions-bar button {
+    padding: 4px 8px;
+    font-size: 10px;
+  }
+
   .sidebar-list {
-    flex: 1;
     overflow-y: auto;
     padding: 8px;
   }
@@ -488,6 +549,133 @@
   }
 
   .unsaved-dot.show { display: inline-block; }
+
+  /* File tree */
+  .file-tree {
+    flex: 1;
+    overflow-y: auto;
+    padding: 4px 0;
+  }
+
+  .file-tree::-webkit-scrollbar { width: 4px; }
+  .file-tree::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+
+  .file-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #cdd6f4;
+    border-left: 2px solid transparent;
+    transition: background 0.1s, border-color 0.1s;
+    position: relative;
+  }
+
+  .file-item:hover {
+    background: rgba(203, 166, 247, 0.05);
+  }
+
+  .file-item.active {
+    background: rgba(203, 166, 247, 0.1);
+    border-left-color: #cba6f7;
+  }
+
+  .file-item .file-actions {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .file-item:hover .file-actions { opacity: 1; }
+
+  .file-actions button {
+    background: none;
+    border: none;
+    color: #6c7086;
+    cursor: pointer;
+    padding: 1px 4px;
+    border-radius: 3px;
+    font-size: 11px;
+    line-height: 1;
+    transition: color 0.15s, background 0.15s;
+  }
+
+  .file-actions button:hover { color: #cdd6f4; background: #313244; }
+  .file-actions button.fa-del:hover { color: #f38ba8; background: #313244; }
+
+  .folder-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 12px;
+    cursor: pointer;
+    font-size: 12px;
+    color: #a6adc8;
+    font-weight: 600;
+    transition: background 0.1s;
+    position: relative;
+  }
+
+  .folder-item:hover {
+    background: rgba(203, 166, 247, 0.05);
+  }
+
+  .folder-item .folder-arrow {
+    font-size: 10px;
+    transition: transform 0.15s;
+    display: inline-block;
+    width: 12px;
+    text-align: center;
+  }
+
+  .folder-item .file-actions {
+    position: absolute;
+    right: 6px;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    gap: 2px;
+    opacity: 0;
+    transition: opacity 0.15s;
+  }
+
+  .folder-item:hover .file-actions { opacity: 1; }
+
+  .folder-children {
+    padding-left: 16px;
+  }
+
+  .folder-children.collapsed {
+    display: none;
+  }
+
+  .file-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+    flex-shrink: 0;
+  }
+
+  .file-dot.html { background: #fab387; }
+  .file-dot.css { background: #89b4fa; }
+  .file-dot.js { background: #f9e2af; }
+  .file-dot.other { background: #a6adc8; }
+
+  .editor-empty {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #585b70;
+    font-size: 14px;
+  }
 
   /* Toast notification */
   .toast {
@@ -659,43 +847,37 @@
 
 <div class="main">
   <div class="sidebar" id="sidebar">
-    <div class="sidebar-header">
-      <h2>Projects</h2>
-      <button onclick="newProject()">+ New</button>
+    <!-- Projects section -->
+    <div class="sidebar-section">
+      <div class="sidebar-header clickable" onclick="toggleSection('projects')">
+        <h2><span id="projectsArrow">&#9662;</span> Projects</h2>
+        <button onclick="event.stopPropagation();newProject()">+ New</button>
+      </div>
+      <div class="sidebar-list" id="sidebarList"></div>
     </div>
-    <div class="sidebar-list" id="sidebarList"></div>
+    <!-- Files section -->
+    <div class="sidebar-section files-section">
+      <div class="sidebar-header">
+        <h2>Files</h2>
+        <div class="file-actions-bar">
+          <button onclick="createNewFile()" title="New File">+ File</button>
+          <button onclick="createNewFolder()" title="New Folder">+ Folder</button>
+        </div>
+      </div>
+      <div class="file-tree" id="fileTree"></div>
+    </div>
   </div>
 
   <div class="editors" id="editorsPane">
-    <div class="editor-tabs">
-      <button class="editor-tab active" data-tab="html" onclick="switchTab('html')"><span class="dot html"></span>HTML</button>
-      <button class="editor-tab" data-tab="css" onclick="switchTab('css')"><span class="dot css"></span>CSS</button>
-      <button class="editor-tab" data-tab="js" onclick="switchTab('js')"><span class="dot js"></span>JS</button>
-    </div>
-    <!-- HTML Editor -->
-    <div class="editor-panel active" id="panelHtml">
+    <div class="editor-tabs" id="editorTabs"></div>
+    <div class="editor-panel active" id="editorPanel">
       <div class="editor-wrap">
-        <div class="line-numbers" id="htmlLines">1</div>
-        <pre><code id="htmlHighlight"></code></pre>
-        <textarea id="htmlEditor" spellcheck="false"></textarea>
+        <div class="line-numbers" id="editorLines">1</div>
+        <pre><code id="editorHighlight"></code></pre>
+        <textarea id="editor" spellcheck="false"></textarea>
       </div>
     </div>
-    <!-- CSS Editor -->
-    <div class="editor-panel" id="panelCss">
-      <div class="editor-wrap">
-        <div class="line-numbers" id="cssLines">1</div>
-        <pre><code id="cssHighlight"></code></pre>
-        <textarea id="cssEditor" spellcheck="false"></textarea>
-      </div>
-    </div>
-    <!-- JS Editor -->
-    <div class="editor-panel" id="panelJs">
-      <div class="editor-wrap">
-        <div class="line-numbers" id="jsLines">1</div>
-        <pre><code id="jsHighlight"></code></pre>
-        <textarea id="jsEditor" spellcheck="false"></textarea>
-      </div>
-    </div>
+    <div class="editor-empty" id="editorEmpty" style="display:none;">Select a file to start editing</div>
   </div>
 
   <div class="resizer" id="resizer"></div>
@@ -716,26 +898,43 @@
 </div>
 
 <script>
-const htmlEditor = document.getElementById('htmlEditor');
-const cssEditor = document.getElementById('cssEditor');
-const jsEditor = document.getElementById('jsEditor');
-const htmlHighlight = document.getElementById('htmlHighlight');
-const cssHighlight = document.getElementById('cssHighlight');
-const jsHighlight = document.getElementById('jsHighlight');
-const htmlLines = document.getElementById('htmlLines');
-const cssLines = document.getElementById('cssLines');
-const jsLines = document.getElementById('jsLines');
-const preview = document.getElementById('preview');
-const consoleOutput = document.getElementById('consoleOutput');
+var editor = document.getElementById('editor');
+var editorHighlight = document.getElementById('editorHighlight');
+var editorLines = document.getElementById('editorLines');
+var editorPanel = document.getElementById('editorPanel');
+var editorEmpty = document.getElementById('editorEmpty');
+var editorTabs = document.getElementById('editorTabs');
+var preview = document.getElementById('preview');
+var consoleOutput = document.getElementById('consoleOutput');
 
-const defaultHTML = '<div class="card">\n  <h1>Hello World!<\/h1>\n  <p>Start editing to see changes live.<\/p>\n  <button class="btn">Click Me<\/button>\n<\/div>';
+var openFiles = [];       // array of file IDs currently open as tabs
+var activeFileId = null;  // currently displayed file ID
+var collapsedFolders = {}; // track collapsed folder IDs
 
-const defaultCSS = 'body {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: #f0f0f0;\n  font-family: sans-serif;\n}\n\n.card {\n  background: white;\n  padding: 40px;\n  border-radius: 12px;\n  box-shadow: 0 4px 24px rgba(0,0,0,0.1);\n  text-align: center;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 10px;\n}\n\np {\n  color: #666;\n  margin-bottom: 20px;\n}\n\n.btn {\n  background: #6c5ce7;\n  color: white;\n  border: none;\n  padding: 10px 28px;\n  border-radius: 6px;\n  font-size: 16px;\n  cursor: pointer;\n  transition: background 0.2s;\n}\n\n.btn:hover {\n  background: #5a4bd1;\n}';
+var defaultHTML = '<div class="card">\n  <h1>Hello World!<\/h1>\n  <p>Start editing to see changes live.<\/p>\n  <button class="btn">Click Me<\/button>\n<\/div>';
 
-const defaultJS = 'const btn = document.querySelector(\'.btn\');\nlet count = 0;\n\nbtn.addEventListener(\'click\', function() {\n  count++;\n  btn.textContent = \'Clicked \' + count + \' times\';\n});';
+var defaultCSS = 'body {\n  display: flex;\n  justify-content: center;\n  align-items: center;\n  min-height: 100vh;\n  margin: 0;\n  background: #f0f0f0;\n  font-family: sans-serif;\n}\n\n.card {\n  background: white;\n  padding: 40px;\n  border-radius: 12px;\n  box-shadow: 0 4px 24px rgba(0,0,0,0.1);\n  text-align: center;\n}\n\nh1 {\n  color: #333;\n  margin-bottom: 10px;\n}\n\np {\n  color: #666;\n  margin-bottom: 20px;\n}\n\n.btn {\n  background: #6c5ce7;\n  color: white;\n  border: none;\n  padding: 10px 28px;\n  border-radius: 6px;\n  font-size: 16px;\n  cursor: pointer;\n  transition: background 0.2s;\n}\n\n.btn:hover {\n  background: #5a4bd1;\n}';
+
+var defaultJS = 'const btn = document.querySelector(\'.btn\');\nlet count = 0;\n\nbtn.addEventListener(\'click\', function() {\n  count++;\n  btn.textContent = \'Clicked \' + count + \' times\';\n});';
 
 function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/\x3c/g, '&lt;').replace(/>/g, '&gt;');
+}
+
+// ---- Language detection from filename ----
+function getLang(filename) {
+  if (!filename) return 'text';
+  var ext = filename.split('.').pop().toLowerCase();
+  if (ext === 'html' || ext === 'htm') return 'html';
+  if (ext === 'css') return 'css';
+  if (ext === 'js') return 'js';
+  return 'text';
+}
+
+function getLangDotClass(filename) {
+  var lang = getLang(filename);
+  if (lang === 'text') return 'other';
+  return lang;
 }
 
 // ---- HTML Syntax Highlighting ----
@@ -743,33 +942,26 @@ function highlightHTML(code) {
   let result = '';
   let i = 0;
   while (i < code.length) {
-    // Comments
     if (code.startsWith('<!--', i)) {
       let end = code.indexOf('-->', i);
       if (end === -1) end = code.length - 3;
       result += '<span class="hl-comment">' + escapeHTML(code.slice(i, end + 3)) + '</span>';
       i = end + 3;
     }
-    // Tags
     else if (code[i] === '<' && (code[i+1] === '/' || /[a-zA-Z!]/.test(code[i+1] || ''))) {
       let tag = '<span class="hl-bracket">&lt;</span>';
       i++;
       if (code[i] === '/') { tag += '<span class="hl-bracket">/</span>'; i++; }
-      // Tag name
       let name = '';
       while (i < code.length && /[a-zA-Z0-9\-]/.test(code[i])) { name += code[i]; i++; }
       tag += '<span class="hl-tag">' + escapeHTML(name) + '</span>';
-      // Attributes
       while (i < code.length && code[i] !== '>' && !(code[i] === '/' && code[i+1] === '>')) {
         if (/\s/.test(code[i])) { tag += code[i]; i++; continue; }
-        // Attribute name
         let attr = '';
         while (i < code.length && /[a-zA-Z0-9\-_]/.test(code[i])) { attr += code[i]; i++; }
         if (attr) tag += '<span class="hl-attr">' + escapeHTML(attr) + '</span>';
-        // =
         if (code[i] === '=') {
           tag += '<span class="hl-bracket">=</span>'; i++;
-          // Attribute value
           if (code[i] === '"' || code[i] === "'") {
             let q = code[i]; let val = q; i++;
             while (i < code.length && code[i] !== q) { val += code[i]; i++; }
@@ -786,7 +978,6 @@ function highlightHTML(code) {
       }
       result += tag;
     }
-    // Entity
     else if (code[i] === '&') {
       let ent = '&';
       i++;
@@ -807,43 +998,35 @@ function highlightCSS(code) {
   let result = '';
   let i = 0;
   while (i < code.length) {
-    // Comments
     if (code[i] === '/' && code[i+1] === '*') {
       let end = code.indexOf('*/', i + 2);
       if (end === -1) end = code.length - 2;
       result += '<span class="hl-css-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
       i = end + 2;
     }
-    // @ rules
     else if (code[i] === '@') {
       let word = '@';
       i++;
       while (i < code.length && /[a-zA-Z\-]/.test(code[i])) { word += code[i]; i++; }
       result += '<span class="hl-css-atrule">' + escapeHTML(word) + '</span>';
     }
-    // Inside a block
     else if (code[i] === '{') {
       result += '<span class="hl-css-punct">{</span>';
       i++;
-      // Properties inside block
       while (i < code.length && code[i] !== '}') {
-        // Comments inside block
         if (code[i] === '/' && code[i+1] === '*') {
           let end = code.indexOf('*/', i + 2);
           if (end === -1) end = code.length - 2;
           result += '<span class="hl-css-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
           i = end + 2;
         }
-        // Nested block (media queries etc.)
         else if (code[i] === '{') {
           result += '<span class="hl-css-punct">{</span>';
           i++;
         }
-        // Whitespace
         else if (/\s/.test(code[i])) {
           result += code[i]; i++;
         }
-        // Property
         else {
           let prop = '';
           while (i < code.length && code[i] !== ':' && code[i] !== '}' && code[i] !== '{' && !(code[i] === '/' && code[i+1] === '*')) {
@@ -853,12 +1036,10 @@ function highlightCSS(code) {
             result += '<span class="hl-css-prop">' + escapeHTML(prop) + '</span>';
             result += '<span class="hl-css-punct">:</span>';
             i++;
-            // Value
             let val = '';
             while (i < code.length && code[i] !== ';' && code[i] !== '}') {
               val += code[i]; i++;
             }
-            // Highlight value with units and !important
             let hv = escapeHTML(val);
             hv = hv.replace(/(\d+\.?\d*)(px|em|rem|%|vh|vw|vmin|vmax|s|ms|deg|fr|ch|ex)/g,
               '$1<span class="hl-css-unit">$2</span>');
@@ -868,7 +1049,6 @@ function highlightCSS(code) {
               result += '<span class="hl-css-punct">;</span>'; i++;
             }
           } else {
-            // Likely a selector inside (nested/media)
             result += '<span class="hl-css-sel">' + escapeHTML(prop) + '</span>';
           }
         }
@@ -877,7 +1057,6 @@ function highlightCSS(code) {
         result += '<span class="hl-css-punct">}</span>'; i++;
       }
     }
-    // Selector (outside blocks)
     else if (/\s/.test(code[i])) {
       result += code[i]; i++;
     }
@@ -898,21 +1077,18 @@ function highlightJS(code) {
   var result = '';
   var i = 0;
   while (i < code.length) {
-    // Single-line comment
     if (code[i] === '/' && code[i+1] === '/') {
       var end = code.indexOf('\n', i);
       if (end === -1) end = code.length;
       result += '<span class="hl-js-comment">' + escapeHTML(code.slice(i, end)) + '</span>';
       i = end;
     }
-    // Multi-line comment
     else if (code[i] === '/' && code[i+1] === '*') {
       var end = code.indexOf('*/', i + 2);
       if (end === -1) end = code.length - 2;
       result += '<span class="hl-js-comment">' + escapeHTML(code.slice(i, end + 2)) + '</span>';
       i = end + 2;
     }
-    // Template literal
     else if (code[i] === '`') {
       var s = '`'; i++;
       while (i < code.length && code[i] !== '`') {
@@ -922,7 +1098,6 @@ function highlightJS(code) {
       if (i < code.length) { s += '`'; i++; }
       result += '<span class="hl-js-templ">' + escapeHTML(s) + '</span>';
     }
-    // Strings
     else if (code[i] === '"' || code[i] === "'") {
       var q = code[i]; var s = q; i++;
       while (i < code.length && code[i] !== q && code[i] !== '\n') {
@@ -932,13 +1107,11 @@ function highlightJS(code) {
       if (i < code.length && code[i] === q) { s += q; i++; }
       result += '<span class="hl-js-str">' + escapeHTML(s) + '</span>';
     }
-    // Numbers
     else if (/[0-9]/.test(code[i]) && (i === 0 || !/[a-zA-Z_$]/.test(code[i-1]))) {
       var num = '';
       while (i < code.length && /[0-9a-fA-FxXoObBeE._]/.test(code[i])) { num += code[i]; i++; }
       result += '<span class="hl-js-num">' + escapeHTML(num) + '</span>';
     }
-    // Identifiers and keywords
     else if (/[a-zA-Z_$]/.test(code[i])) {
       var word = '';
       while (i < code.length && /[a-zA-Z0-9_$]/.test(code[i])) { word += code[i]; i++; }
@@ -952,7 +1125,6 @@ function highlightJS(code) {
         result += escapeHTML(word);
       }
     }
-    // Punctuation
     else if (/[{}()\[\];:.,=<>!&|?+\-*/%~^]/.test(code[i])) {
       result += '<span class="hl-js-punct">' + escapeHTML(code[i]) + '</span>';
       i++;
@@ -965,23 +1137,27 @@ function highlightJS(code) {
   return result;
 }
 
+// ---- Plain text "highlighting" (just escape) ----
+function highlightText(code) {
+  return escapeHTML(code);
+}
+
 function updateLineNumbers(text, el) {
-  const count = text.split('\n').length;
-  let nums = '';
-  for (let i = 1; i <= count; i++) nums += i + '\n';
+  var count = text.split('\n').length;
+  var nums = '';
+  for (var i = 1; i <= count; i++) nums += i + '\n';
   el.textContent = nums;
 }
 
 function syncScroll(textarea, pre, lineNums) {
   pre.scrollTop = textarea.scrollTop;
   pre.scrollLeft = textarea.scrollLeft;
-  lineNums.style.transform = `translateY(${-textarea.scrollTop}px)`;
+  lineNums.style.transform = 'translateY(' + (-textarea.scrollTop) + 'px)';
 }
 
 // ---- Console Panel ----
 window.addConsoleEntry = function(type) {
   var args = Array.prototype.slice.call(arguments, 1);
-  // Remove empty placeholder if present
   var empty = consoleOutput.querySelector('.console-empty');
   if (empty) empty.remove();
 
@@ -1015,11 +1191,100 @@ window.clearConsole = function() {
   consoleOutput.innerHTML = '<div class="console-empty">Console output will appear here...</div>';
 };
 
+// ---- Data Model Helpers ----
+var STORAGE_KEY = 'liveEditorProjects';
+var ACTIVE_KEY = 'liveEditorActiveId';
+var DRAFT_KEY = 'liveEditorDraft';
+var unsaved = false;
+
+function getProjects() {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
+  catch(e) { return []; }
+}
+function setProjects(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
+function getActiveId() { return localStorage.getItem(ACTIVE_KEY) || ''; }
+function setActiveId(id) { localStorage.setItem(ACTIVE_KEY, id || ''); }
+function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
+
+function getCurrentProject() {
+  var projects = getProjects();
+  var activeId = getActiveId();
+  return projects.find(function(p) { return p.id === activeId; }) || null;
+}
+
+// ---- Migration: old flat project -> files array ----
+function migrateProject(p) {
+  if (p.files) return p;
+  p.files = [
+    { id: genId(), name: 'index.html', type: 'file', parentId: null, content: p.html || defaultHTML },
+    { id: genId(), name: 'style.css', type: 'file', parentId: null, content: p.css || defaultCSS },
+    { id: genId(), name: 'script.js', type: 'file', parentId: null, content: p.js || defaultJS }
+  ];
+  delete p.html;
+  delete p.css;
+  delete p.js;
+  return p;
+}
+
+function markUnsaved() {
+  unsaved = true;
+  document.getElementById('unsavedDot').classList.add('show');
+}
+function markSaved() {
+  unsaved = false;
+  document.getElementById('unsavedDot').classList.remove('show');
+}
+
+// ---- Sync active file content from editor ----
+function syncActiveFileContent() {
+  if (!activeFileId) return;
+  var projects = getProjects();
+  var activeId = getActiveId();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === activeFileId; });
+  if (file) {
+    file.content = editor.value;
+    setProjects(projects);
+  }
+}
+
+// ---- Editor Display ----
+function updateEditorDisplay() {
+  if (!activeFileId) return;
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === activeFileId; });
+  if (!file) return;
+  var lang = getLang(file.name);
+  var code = editor.value;
+  if (lang === 'html') {
+    editorHighlight.innerHTML = highlightHTML(code) + '\n';
+  } else if (lang === 'css') {
+    editorHighlight.innerHTML = highlightCSS(code) + '\n';
+  } else if (lang === 'js') {
+    editorHighlight.innerHTML = highlightJS(code) + '\n';
+  } else {
+    editorHighlight.innerHTML = highlightText(code) + '\n';
+  }
+  updateLineNumbers(code, editorLines);
+}
+
+// ---- Preview ----
 function updatePreview() {
-  const html = htmlEditor.value;
-  const css = cssEditor.value;
-  const js = jsEditor.value;
-  // Clear console on each preview update
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  syncActiveFileContent();
+  // Re-read project after sync
+  project = getCurrentProject();
+  var allCSS = '', allHTML = '', allJS = '';
+  project.files.forEach(function(f) {
+    if (f.type !== 'file') return;
+    var lang = getLang(f.name);
+    if (lang === 'css') allCSS += f.content + '\n';
+    else if (lang === 'html') allHTML += f.content + '\n';
+    else if (lang === 'js') allJS += f.content + '\n';
+  });
   clearConsole();
   var consoleOverride = '(function(){'
     + 'var _log=console.log,_warn=console.warn,_error=console.error,_info=console.info,_clear=console.clear;'
@@ -1034,28 +1299,258 @@ function updatePreview() {
     + 'try{parent.addConsoleEntry("error",detail);}catch(e){}'
     + '};'
     + '})();';
-  const doc = preview.contentDocument || preview.contentWindow.document;
+  var doc = preview.contentDocument || preview.contentWindow.document;
   doc.open();
-  doc.write('<!DOCTYPE html><html><head><style>' + css + '<\/style><\/head><body>' + html + '<script>' + consoleOverride + '<\/script><script>' + js + '<\/script><\/body><\/html>');
+  doc.write('<!DOCTYPE html><html><head><style>' + allCSS + '<\/style><\/head><body>' + allHTML + '<script>' + consoleOverride + '<\/script><script>' + allJS + '<\/script><\/body><\/html>');
   doc.close();
 }
 
-function updateHTML() {
-  htmlHighlight.innerHTML = highlightHTML(htmlEditor.value) + '\n';
-  updateLineNumbers(htmlEditor.value, htmlLines);
-  updatePreview();
+// ---- Tab Management ----
+function renderEditorTabs() {
+  editorTabs.innerHTML = '';
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  openFiles.forEach(function(fid) {
+    var file = project.files.find(function(f) { return f.id === fid; });
+    if (!file) return;
+    var tab = document.createElement('button');
+    tab.className = 'editor-tab' + (fid === activeFileId ? ' active' : '');
+    tab.setAttribute('data-file-id', fid);
+    var dotClass = getLangDotClass(file.name);
+    tab.innerHTML = '<span class="dot ' + dotClass + '"></span>' + escapeHTML(file.name)
+      + '<span class="tab-close" title="Close tab">&times;</span>';
+    tab.addEventListener('click', function(e) {
+      if (e.target.classList.contains('tab-close')) return;
+      openFile(fid);
+    });
+    tab.querySelector('.tab-close').addEventListener('click', function(e) {
+      e.stopPropagation();
+      closeFileTab(fid);
+    });
+    editorTabs.appendChild(tab);
+  });
 }
 
-function updateCSS() {
-  cssHighlight.innerHTML = highlightCSS(cssEditor.value) + '\n';
-  updateLineNumbers(cssEditor.value, cssLines);
-  updatePreview();
+function openFile(fileId) {
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === fileId; });
+  if (!file || file.type !== 'file') return;
+  // Save current editor content before switching
+  syncActiveFileContent();
+  // Add to open tabs if not already there
+  if (openFiles.indexOf(fileId) === -1) {
+    openFiles.push(fileId);
+  }
+  activeFileId = fileId;
+  // Load file content into editor
+  editor.value = file.content || '';
+  editorPanel.classList.add('active');
+  editorEmpty.style.display = 'none';
+  updateEditorDisplay();
+  renderEditorTabs();
+  renderFileTree();
+  // Reset scroll
+  editor.scrollTop = 0;
+  editorHighlight.parentElement.scrollTop = 0;
+  editorLines.style.transform = 'translateY(0px)';
 }
 
-function updateJS() {
-  jsHighlight.innerHTML = highlightJS(jsEditor.value) + '\n';
-  updateLineNumbers(jsEditor.value, jsLines);
-  updatePreview();
+function closeFileTab(fileId) {
+  var idx = openFiles.indexOf(fileId);
+  if (idx === -1) return;
+  openFiles.splice(idx, 1);
+  if (activeFileId === fileId) {
+    if (openFiles.length > 0) {
+      // Switch to adjacent tab
+      var newIdx = Math.min(idx, openFiles.length - 1);
+      openFile(openFiles[newIdx]);
+    } else {
+      activeFileId = null;
+      editor.value = '';
+      editorHighlight.innerHTML = '';
+      editorLines.textContent = '1';
+      editorPanel.classList.remove('active');
+      editorEmpty.style.display = 'flex';
+      renderEditorTabs();
+      renderFileTree();
+    }
+  } else {
+    renderEditorTabs();
+  }
+}
+
+function showEditorEmpty() {
+  activeFileId = null;
+  editor.value = '';
+  editorHighlight.innerHTML = '';
+  editorLines.textContent = '1';
+  editorPanel.classList.remove('active');
+  editorEmpty.style.display = 'flex';
+}
+
+// ---- File Tree Rendering ----
+function renderFileTree() {
+  var tree = document.getElementById('fileTree');
+  var project = getCurrentProject();
+  if (!project || !project.files) {
+    tree.innerHTML = '<div class="sidebar-empty">No project selected.</div>';
+    return;
+  }
+  if (project.files.length === 0) {
+    tree.innerHTML = '<div class="sidebar-empty">No files yet.<br>Click <b>+ File</b> to create one.</div>';
+    return;
+  }
+  tree.innerHTML = '';
+  renderNodes(tree, null, project.files);
+}
+
+function renderNodes(container, parentId, files) {
+  // Get items at this level
+  var items = files.filter(function(f) { return f.parentId === parentId; });
+  // Sort: folders first, then files, alphabetical within each
+  var folders = items.filter(function(f) { return f.type === 'folder'; }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+  var fileItems = items.filter(function(f) { return f.type === 'file'; }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+
+  folders.forEach(function(folder) {
+    var isCollapsed = !!collapsedFolders[folder.id];
+    var folderEl = document.createElement('div');
+
+    var row = document.createElement('div');
+    row.className = 'folder-item';
+    row.innerHTML = '<span class="folder-arrow">' + (isCollapsed ? '&#9656;' : '&#9662;') + '</span>'
+      + '<span>' + escapeHTML(folder.name) + '</span>'
+      + '<div class="file-actions">'
+      + '<button title="New file in folder" onclick="event.stopPropagation();createNewFile(\'' + folder.id + '\')">+</button>'
+      + '<button title="Rename" onclick="event.stopPropagation();renameFileById(\'' + folder.id + '\')">&#9998;</button>'
+      + '<button class="fa-del" title="Delete" onclick="event.stopPropagation();deleteFileById(\'' + folder.id + '\')">&#10005;</button>'
+      + '</div>';
+    row.addEventListener('click', function() {
+      collapsedFolders[folder.id] = !collapsedFolders[folder.id];
+      renderFileTree();
+    });
+    folderEl.appendChild(row);
+
+    var children = document.createElement('div');
+    children.className = 'folder-children' + (isCollapsed ? ' collapsed' : '');
+    renderNodes(children, folder.id, files);
+    folderEl.appendChild(children);
+
+    container.appendChild(folderEl);
+  });
+
+  fileItems.forEach(function(file) {
+    var row = document.createElement('div');
+    row.className = 'file-item' + (file.id === activeFileId ? ' active' : '');
+    var dotClass = getLangDotClass(file.name);
+    row.innerHTML = '<span class="file-dot ' + dotClass + '"></span>'
+      + '<span>' + escapeHTML(file.name) + '</span>'
+      + '<div class="file-actions">'
+      + '<button title="Rename" onclick="event.stopPropagation();renameFileById(\'' + file.id + '\')">&#9998;</button>'
+      + '<button class="fa-del" title="Delete" onclick="event.stopPropagation();deleteFileById(\'' + file.id + '\')">&#10005;</button>'
+      + '</div>';
+    row.addEventListener('click', function() {
+      openFile(file.id);
+    });
+    container.appendChild(row);
+  });
+}
+
+// ---- File/Folder CRUD Operations ----
+function createNewFile(parentId) {
+  parentId = parentId || null;
+  openModal('File name:', 'untitled.html', function(name) {
+    var projects = getProjects();
+    var activeId = getActiveId();
+    var project = projects.find(function(p) { return p.id === activeId; });
+    if (!project || !project.files) return;
+    // Validate no duplicate in same folder
+    var dup = project.files.find(function(f) { return f.parentId === parentId && f.name === name; });
+    if (dup) { showToast('A file with that name already exists here.', 'error'); return; }
+    var newFile = { id: genId(), name: name, type: 'file', parentId: parentId, content: '' };
+    project.files.push(newFile);
+    project.updatedAt = new Date().toISOString();
+    setProjects(projects);
+    renderFileTree();
+    openFile(newFile.id);
+    markUnsaved();
+    showToast('File created!', 'success');
+  });
+}
+
+function createNewFolder(parentId) {
+  parentId = parentId || null;
+  openModal('Folder name:', 'new-folder', function(name) {
+    var projects = getProjects();
+    var activeId = getActiveId();
+    var project = projects.find(function(p) { return p.id === activeId; });
+    if (!project || !project.files) return;
+    var dup = project.files.find(function(f) { return f.parentId === parentId && f.name === name && f.type === 'folder'; });
+    if (dup) { showToast('A folder with that name already exists here.', 'error'); return; }
+    var newFolder = { id: genId(), name: name, type: 'folder', parentId: parentId };
+    project.files.push(newFolder);
+    project.updatedAt = new Date().toISOString();
+    setProjects(projects);
+    renderFileTree();
+    showToast('Folder created!', 'success');
+  });
+}
+
+function renameFileById(fileId) {
+  var projects = getProjects();
+  var activeId = getActiveId();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === fileId; });
+  if (!file) return;
+  openModal('Rename "' + file.name + '":', file.name, function(name) {
+    file.name = name;
+    project.updatedAt = new Date().toISOString();
+    setProjects(projects);
+    renderFileTree();
+    renderEditorTabs();
+    if (activeFileId === fileId) updateEditorDisplay();
+    showToast('Renamed!', 'success');
+  });
+}
+
+function deleteFileById(fileId) {
+  var projects = getProjects();
+  var activeId = getActiveId();
+  var project = projects.find(function(p) { return p.id === activeId; });
+  if (!project || !project.files) return;
+  var file = project.files.find(function(f) { return f.id === fileId; });
+  if (!file) return;
+  var label = file.type === 'folder' ? 'folder' : 'file';
+  openConfirm('Delete ' + label + ' "' + file.name + '"?' + (file.type === 'folder' ? ' All contents will be deleted.' : ''), function() {
+    // Collect all IDs to delete (recursive for folders)
+    var idsToDelete = [];
+    function collectIds(id) {
+      idsToDelete.push(id);
+      project.files.forEach(function(f) {
+        if (f.parentId === id) collectIds(f.id);
+      });
+    }
+    collectIds(fileId);
+    project.files = project.files.filter(function(f) { return idsToDelete.indexOf(f.id) === -1; });
+    project.updatedAt = new Date().toISOString();
+    setProjects(projects);
+    // Close tabs for deleted files
+    idsToDelete.forEach(function(did) {
+      var idx = openFiles.indexOf(did);
+      if (idx !== -1) openFiles.splice(idx, 1);
+    });
+    if (idsToDelete.indexOf(activeFileId) !== -1) {
+      if (openFiles.length > 0) {
+        openFile(openFiles[openFiles.length - 1]);
+      } else {
+        showEditorEmpty();
+      }
+    }
+    renderFileTree();
+    renderEditorTabs();
+    showToast(label.charAt(0).toUpperCase() + label.slice(1) + ' deleted', 'info');
+  });
 }
 
 // ---- Void elements (self-closing) ----
@@ -1165,14 +1660,25 @@ function getEmmetAbbr(text, pos) {
   return { start: start, abbr: abbr };
 }
 
+// ---- Get active file language ----
+function getActiveFileLang() {
+  if (!activeFileId) return 'text';
+  var project = getCurrentProject();
+  if (!project || !project.files) return 'text';
+  var file = project.files.find(function(f) { return f.id === activeFileId; });
+  if (!file) return 'text';
+  return getLang(file.name);
+}
+
 // ---- Tab: Emmet expand or indent ----
 function handleTab(e) {
   if (e.key !== 'Tab') return;
   e.preventDefault();
   var ta = e.target;
   var pos = ta.selectionStart;
+  var lang = getActiveFileLang();
 
-  if (ta === htmlEditor) {
+  if (lang === 'html') {
     var em = getEmmetAbbr(ta.value, pos);
     if (em) {
       try {
@@ -1206,6 +1712,7 @@ function handleTab(e) {
 // ---- Auto-close HTML tags on > ----
 function handleAutoClose(e) {
   if (e.key !== '>') return;
+  if (getActiveFileLang() !== 'html') return;
   var ta = e.target;
   var pos = ta.selectionStart;
   var before = ta.value.substring(0, pos);
@@ -1232,6 +1739,7 @@ function handleEnter(e) {
   var after = ta.value.substring(pos);
   var lastLine = before.split('\n').pop();
   var indent = lastLine.match(/^(\s*)/)[1];
+  var lang = getActiveFileLang();
 
   e.preventDefault();
 
@@ -1241,17 +1749,19 @@ function handleEnter(e) {
     ta.selectionStart = ta.selectionEnd = pos + indent.length + 3;
   } else {
     var extra = '';
-    if (before.match(/<[a-zA-Z][^>]*>\s*$/) && ta === htmlEditor) extra = '  ';
-    if (before.match(/\{\s*$/) && (ta === cssEditor || ta === jsEditor)) extra = '  ';
+    if (before.match(/<[a-zA-Z][^>]*>\s*$/) && lang === 'html') extra = '  ';
+    if (before.match(/\{\s*$/) && (lang === 'css' || lang === 'js')) extra = '  ';
     ta.value = before + '\n' + indent + extra + after;
     ta.selectionStart = ta.selectionEnd = pos + 1 + indent.length + extra.length;
   }
   ta.dispatchEvent(new Event('input'));
 }
 
-// ---- Auto-close CSS braces ----
+// ---- Auto-close braces ----
 function handleBrace(e) {
   if (e.key !== '{') return;
+  var lang = getActiveFileLang();
+  if (lang !== 'css' && lang !== 'js') return;
   var ta = e.target;
   var pos = ta.selectionStart;
   var after = ta.value.substring(pos);
@@ -1263,39 +1773,30 @@ function handleBrace(e) {
   ta.dispatchEvent(new Event('input'));
 }
 
-// ---- Tab Switching ----
-function switchTab(tab) {
-  var tabs = document.querySelectorAll('.editor-tab');
-  var panels = document.querySelectorAll('.editor-panel');
-  tabs.forEach(function(t) { t.classList.toggle('active', t.getAttribute('data-tab') === tab); });
-  panels.forEach(function(p) { p.classList.remove('active'); });
-  document.getElementById('panel' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
-}
+// ---- Editor Event Listeners ----
+editor.addEventListener('input', function() {
+  updateEditorDisplay();
+  updatePreview();
+  markUnsaved();
+  autoSave();
+});
 
-htmlEditor.addEventListener('input', updateHTML);
-cssEditor.addEventListener('input', updateCSS);
-jsEditor.addEventListener('input', updateJS);
-htmlEditor.addEventListener('keydown', handleTab);
-cssEditor.addEventListener('keydown', handleTab);
-jsEditor.addEventListener('keydown', handleTab);
-htmlEditor.addEventListener('keydown', handleAutoClose);
-htmlEditor.addEventListener('keydown', handleEnter);
-cssEditor.addEventListener('keydown', handleEnter);
-jsEditor.addEventListener('keydown', handleEnter);
-cssEditor.addEventListener('keydown', handleBrace);
-jsEditor.addEventListener('keydown', handleBrace);
+editor.addEventListener('keydown', handleTab);
+editor.addEventListener('keydown', handleAutoClose);
+editor.addEventListener('keydown', handleEnter);
+editor.addEventListener('keydown', handleBrace);
 
-htmlEditor.addEventListener('scroll', () => syncScroll(htmlEditor, htmlHighlight.parentElement, htmlLines));
-cssEditor.addEventListener('scroll', () => syncScroll(cssEditor, cssHighlight.parentElement, cssLines));
-jsEditor.addEventListener('scroll', () => syncScroll(jsEditor, jsHighlight.parentElement, jsLines));
+editor.addEventListener('scroll', function() {
+  syncScroll(editor, editorHighlight.parentElement, editorLines);
+});
 
 // Resizer
-const resizer = document.getElementById('resizer');
-const editorsPane = document.getElementById('editorsPane');
-const previewPane = document.getElementById('previewPane');
-let isResizing = false;
+var resizer = document.getElementById('resizer');
+var editorsPane = document.getElementById('editorsPane');
+var previewPane = document.getElementById('previewPane');
+var isResizing = false;
 
-resizer.addEventListener('mousedown', (e) => {
+resizer.addEventListener('mousedown', function(e) {
   isResizing = true;
   resizer.classList.add('active');
   document.body.style.cursor = 'col-resize';
@@ -1304,17 +1805,17 @@ resizer.addEventListener('mousedown', (e) => {
   e.preventDefault();
 });
 
-document.addEventListener('mousemove', (e) => {
+document.addEventListener('mousemove', function(e) {
   if (!isResizing) return;
-  const container = document.querySelector('.main');
-  const rect = container.getBoundingClientRect();
-  const ratio = (e.clientX - rect.left) / rect.width;
-  const clamped = Math.max(0.2, Math.min(0.8, ratio));
+  var container = document.querySelector('.main');
+  var rect = container.getBoundingClientRect();
+  var ratio = (e.clientX - rect.left) / rect.width;
+  var clamped = Math.max(0.2, Math.min(0.8, ratio));
   editorsPane.style.flex = String(clamped);
   previewPane.style.flex = String(1 - clamped);
 });
 
-document.addEventListener('mouseup', () => {
+document.addEventListener('mouseup', function() {
   if (isResizing) {
     isResizing = false;
     resizer.classList.remove('active');
@@ -1325,39 +1826,76 @@ document.addEventListener('mouseup', () => {
 });
 
 function resetEditors() {
-  htmlEditor.value = defaultHTML;
-  cssEditor.value = defaultCSS;
-  jsEditor.value = defaultJS;
-  updateHTML();
-  updateCSS();
-  updateJS();
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  project.files.forEach(function(f) {
+    if (f.type !== 'file') return;
+    var lang = getLang(f.name);
+    if (f.name === 'index.html') f.content = defaultHTML;
+    else if (f.name === 'style.css') f.content = defaultCSS;
+    else if (f.name === 'script.js') f.content = defaultJS;
+    else f.content = '';
+  });
+  var projects = getProjects();
+  var activeId = getActiveId();
+  var idx = projects.findIndex(function(p) { return p.id === activeId; });
+  if (idx !== -1) { projects[idx] = project; setProjects(projects); }
+  // Reload current file
+  if (activeFileId) {
+    var file = project.files.find(function(f) { return f.id === activeFileId; });
+    if (file) editor.value = file.content || '';
+  }
+  updateEditorDisplay();
+  updatePreview();
   markUnsaved();
 }
 
 function copyOutput() {
-  var h = htmlEditor.value;
-  var c = cssEditor.value;
-  var j = jsEditor.value;
-  var full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + c + '\n<\/style>\n<\/head>\n<body>\n' + h + '\n<script>\n' + j + '\n<\/script>\n<\/body>\n<\/html>';
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  syncActiveFileContent();
+  project = getCurrentProject();
+  var allCSS = '', allHTML = '', allJS = '';
+  project.files.forEach(function(f) {
+    if (f.type !== 'file') return;
+    var lang = getLang(f.name);
+    if (lang === 'css') allCSS += f.content + '\n';
+    else if (lang === 'html') allHTML += f.content + '\n';
+    else if (lang === 'js') allJS += f.content + '\n';
+  });
+  var full = '<!DOCTYPE html>\n<html>\n<head>\n<style>\n' + allCSS + '<\/style>\n<\/head>\n<body>\n' + allHTML + '\n<script>\n' + allJS + '<\/script>\n<\/body>\n<\/html>';
   navigator.clipboard.writeText(full).then(function() { showToast('Copied to clipboard!', 'success'); });
 }
 
 // ---- Download ZIP ----
 function downloadZip() {
-  var h = htmlEditor.value;
-  var c = cssEditor.value;
-  var j = jsEditor.value;
-  var htmlContent = '<!DOCTYPE html>\n<html>\n<head>\n<link rel="stylesheet" href="style.css">\n<\/head>\n<body>\n' + h + '\n<script src="script.js"><\/script>\n<\/body>\n<\/html>';
+  var project = getCurrentProject();
+  if (!project || !project.files) return;
+  syncActiveFileContent();
+  project = getCurrentProject();
 
   var zip = new JSZip();
-  zip.file('index.html', htmlContent);
-  zip.file('style.css', c);
-  zip.file('script.js', j);
 
-  var projects = getProjects();
-  var activeId = getActiveId();
-  var project = projects.find(function(p) { return p.id === activeId; });
-  var filename = (project ? project.name.replace(/[^a-zA-Z0-9_\-]/g, '_') : 'project') + '.zip';
+  // Build folder structure
+  function getFilePath(file) {
+    var parts = [file.name];
+    var current = file;
+    while (current.parentId) {
+      var parent = project.files.find(function(f) { return f.id === current.parentId; });
+      if (!parent) break;
+      parts.unshift(parent.name);
+      current = parent;
+    }
+    return parts.join('/');
+  }
+
+  project.files.forEach(function(f) {
+    if (f.type === 'file') {
+      zip.file(getFilePath(f), f.content || '');
+    }
+  });
+
+  var filename = (project.name.replace(/[^a-zA-Z0-9_\-]/g, '_') || 'project') + '.zip';
 
   zip.generateAsync({ type: 'blob' }).then(function(blob) {
     var link = document.createElement('a');
@@ -1428,29 +1966,26 @@ document.getElementById('confirmOverlay').addEventListener('click', function(e) 
   if (e.target === this) closeConfirm();
 });
 
-// ---- Project CRUD (localStorage) ----
-var STORAGE_KEY = 'liveEditorProjects';
-var ACTIVE_KEY = 'liveEditorActiveId';
-var unsaved = false;
+// ---- Sidebar toggle & section toggle ----
+document.getElementById('sidebarToggle').addEventListener('click', function() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+});
 
-function getProjects() {
-  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; }
-  catch(e) { return []; }
-}
-function setProjects(arr) { localStorage.setItem(STORAGE_KEY, JSON.stringify(arr)); }
-function getActiveId() { return localStorage.getItem(ACTIVE_KEY) || ''; }
-function setActiveId(id) { localStorage.setItem(ACTIVE_KEY, id || ''); }
-function genId() { return Date.now().toString(36) + Math.random().toString(36).substr(2, 5); }
-
-function markUnsaved() {
-  unsaved = true;
-  document.getElementById('unsavedDot').classList.add('show');
-}
-function markSaved() {
-  unsaved = false;
-  document.getElementById('unsavedDot').classList.remove('show');
+var sectionCollapsed = { projects: false };
+function toggleSection(section) {
+  sectionCollapsed[section] = !sectionCollapsed[section];
+  var list = document.getElementById('sidebarList');
+  var arrow = document.getElementById('projectsArrow');
+  if (sectionCollapsed[section]) {
+    list.style.display = 'none';
+    arrow.innerHTML = '&#9656;';
+  } else {
+    list.style.display = '';
+    arrow.innerHTML = '&#9662;';
+  }
 }
 
+// ---- Project List ----
 function renderProjectList() {
   var list = document.getElementById('sidebarList');
   var projects = getProjects();
@@ -1476,12 +2011,7 @@ function renderProjectList() {
   });
 }
 
-// ---- Sidebar toggle ----
-document.getElementById('sidebarToggle').addEventListener('click', function() {
-  document.getElementById('sidebar').classList.toggle('collapsed');
-});
-
-// ---- Switch project (from sidebar click) ----
+// ---- Switch project ----
 function switchToProject(id) {
   if (id === getActiveId()) return;
   if (unsaved) {
@@ -1502,50 +2032,67 @@ function switchToProject(id) {
   renderProjectList();
 }
 
-// CREATE
+// ---- CREATE Project ----
 function newProject() {
   openModal('New project name:', 'Untitled', function(name) {
     var projects = getProjects();
     var project = {
       id: genId(),
       name: name,
-      html: defaultHTML,
-      css: defaultCSS,
-      js: defaultJS,
+      files: [
+        { id: genId(), name: 'index.html', type: 'file', parentId: null, content: defaultHTML },
+        { id: genId(), name: 'style.css', type: 'file', parentId: null, content: defaultCSS },
+        { id: genId(), name: 'script.js', type: 'file', parentId: null, content: defaultJS }
+      ],
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString()
     };
     projects.push(project);
     setProjects(projects);
     setActiveId(project.id);
-    htmlEditor.value = project.html;
-    cssEditor.value = project.css;
-    jsEditor.value = project.js;
-    updateHTML();
-    updateCSS();
-    updateJS();
+    openFiles = [];
+    activeFileId = null;
+    // Open index.html by default
+    var indexFile = project.files.find(function(f) { return f.name === 'index.html'; });
+    if (indexFile) {
+      openFile(indexFile.id);
+    }
     renderProjectList();
+    renderFileTree();
+    updatePreview();
     markSaved();
     showToast('Project created!', 'success');
   });
 }
 
-// READ
+// ---- READ / Load Project ----
 function loadProject(id) {
   var projects = getProjects();
   var project = projects.find(function(p) { return p.id === id; });
   if (!project) return;
+  // Migrate old format
+  migrateProject(project);
+  setProjects(projects);
   setActiveId(id);
-  htmlEditor.value = project.html;
-  cssEditor.value = project.css;
-  jsEditor.value = project.js || defaultJS;
-  updateHTML();
-  updateCSS();
-  updateJS();
+  // Reset tabs
+  openFiles = [];
+  activeFileId = null;
+  // Open first html file or first file
+  var firstHtml = project.files.find(function(f) { return f.type === 'file' && getLang(f.name) === 'html'; });
+  var firstFile = project.files.find(function(f) { return f.type === 'file'; });
+  var toOpen = firstHtml || firstFile;
+  if (toOpen) {
+    openFile(toOpen.id);
+  } else {
+    showEditorEmpty();
+  }
+  renderProjectList();
+  renderFileTree();
+  updatePreview();
   markSaved();
 }
 
-// UPDATE
+// ---- UPDATE / Save Project ----
 function saveProject() {
   var activeId = getActiveId();
   var projects = getProjects();
@@ -1554,9 +2101,9 @@ function saveProject() {
     newProject();
     return;
   }
-  project.html = htmlEditor.value;
-  project.css = cssEditor.value;
-  project.js = jsEditor.value;
+  syncActiveFileContent();
+  projects = getProjects();
+  project = projects.find(function(p) { return p.id === activeId; });
   project.updatedAt = new Date().toISOString();
   setProjects(projects);
   renderProjectList();
@@ -1582,7 +2129,7 @@ function renameProjectById(id) {
   });
 }
 
-// DELETE
+// ---- DELETE Project ----
 function deleteProject() {
   var activeId = getActiveId();
   deleteProjectById(activeId);
@@ -1600,12 +2147,11 @@ function deleteProjectById(id) {
         loadProject(projects[projects.length - 1].id);
       } else {
         setActiveId('');
-        htmlEditor.value = defaultHTML;
-        cssEditor.value = defaultCSS;
-        jsEditor.value = defaultJS;
-        updateHTML();
-        updateCSS();
-        updateJS();
+        openFiles = [];
+        activeFileId = null;
+        showEditorEmpty();
+        renderFileTree();
+        updatePreview();
       }
     }
     renderProjectList();
@@ -1615,15 +2161,16 @@ function deleteProjectById(id) {
 }
 
 // ---- Auto-save draft to localStorage (debounced) ----
-var DRAFT_KEY = 'liveEditorDraft';
 var autoSaveTimer = null;
 
 function saveDraft() {
+  syncActiveFileContent();
+  var project = getCurrentProject();
   localStorage.setItem(DRAFT_KEY, JSON.stringify({
-    html: htmlEditor.value,
-    css: cssEditor.value,
-    js: jsEditor.value,
+    files: project ? project.files : [],
     activeId: getActiveId(),
+    activeFileId: activeFileId,
+    openFiles: openFiles,
     ts: Date.now()
   }));
 }
@@ -1637,11 +2184,6 @@ function autoSave() {
   clearTimeout(autoSaveTimer);
   autoSaveTimer = setTimeout(saveDraft, 500);
 }
-
-// Track unsaved changes + auto-save draft
-htmlEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
-cssEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
-jsEditor.addEventListener('input', function() { markUnsaved(); autoSave(); });
 
 // Ctrl+S to save project
 document.addEventListener('keydown', function(e) {
@@ -1657,38 +2199,54 @@ var initId = getActiveId();
 var draft = loadDraft();
 
 if (initId) {
-  // Load saved project first
+  var projects = getProjects();
+  var proj = projects.find(function(p) { return p.id === initId; });
+  if (proj) {
+    // Migrate if needed
+    migrateProject(proj);
+    setProjects(projects);
+  }
   loadProject(initId);
   // If there's a newer draft for this project, restore it
-  if (draft && draft.activeId === initId && draft.ts) {
-    var projects = getProjects();
-    var proj = projects.find(function(p) { return p.id === initId; });
-    var projTime = proj && proj.updatedAt ? new Date(proj.updatedAt).getTime() : 0;
+  if (draft && draft.activeId === initId && draft.ts && draft.files) {
+    var projects2 = getProjects();
+    var proj2 = projects2.find(function(p) { return p.id === initId; });
+    var projTime = proj2 && proj2.updatedAt ? new Date(proj2.updatedAt).getTime() : 0;
     if (draft.ts > projTime) {
-      htmlEditor.value = draft.html;
-      cssEditor.value = draft.css;
-      jsEditor.value = draft.js || defaultJS;
-      updateHTML();
-      updateCSS();
-      updateJS();
-      if (draft.html !== proj.html || draft.css !== proj.css || (draft.js || '') !== (proj.js || '')) markUnsaved();
+      proj2.files = draft.files;
+      setProjects(projects2);
+      // Restore open tabs
+      openFiles = draft.openFiles || [];
+      activeFileId = draft.activeFileId || null;
+      if (activeFileId) {
+        var af = proj2.files.find(function(f) { return f.id === activeFileId; });
+        if (af) {
+          editor.value = af.content || '';
+          editorPanel.classList.add('active');
+          editorEmpty.style.display = 'none';
+          updateEditorDisplay();
+        }
+      }
+      renderEditorTabs();
+      renderFileTree();
+      updatePreview();
+      markUnsaved();
     }
   }
-} else if (draft) {
-  // No active project but there's a draft — restore it
-  htmlEditor.value = draft.html || defaultHTML;
-  cssEditor.value = draft.css || defaultCSS;
-  jsEditor.value = draft.js || defaultJS;
-  updateHTML();
-  updateCSS();
-  updateJS();
+} else if (draft && draft.files && draft.files.length > 0 && draft.activeId) {
+  // Try to load the project from draft
+  var projects3 = getProjects();
+  var proj3 = projects3.find(function(p) { return p.id === draft.activeId; });
+  if (proj3) {
+    loadProject(draft.activeId);
+  } else {
+    showEditorEmpty();
+    renderFileTree();
+  }
 } else {
-  htmlEditor.value = defaultHTML;
-  cssEditor.value = defaultCSS;
-  jsEditor.value = defaultJS;
-  updateHTML();
-  updateCSS();
-  updateJS();
+  // No project, no draft — show empty state
+  showEditorEmpty();
+  renderFileTree();
 }
 </script>
 </body>
