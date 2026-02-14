@@ -35,22 +35,77 @@
 
   header .actions {
     display: flex;
-    gap: 8px;
+    gap: 6px;
+    align-items: center;
+  }
+
+  header .actions .separator {
+    width: 1px;
+    height: 20px;
+    background: #45475a;
+    margin: 0 4px;
   }
 
   header button {
     background: #313244;
-    color: #cdd6f4;
+    color: #a6adc8;
     border: 1px solid #45475a;
-    padding: 5px 14px;
-    border-radius: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
     cursor: pointer;
     font-size: 12px;
-    transition: background 0.2s;
+    font-weight: 500;
+    transition: all 0.2s ease;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    white-space: nowrap;
+  }
+
+  header button svg {
+    width: 14px;
+    height: 14px;
+    flex-shrink: 0;
   }
 
   header button:hover {
     background: #45475a;
+    color: #cdd6f4;
+    border-color: #585b70;
+  }
+
+  header button:active {
+    transform: scale(0.96);
+  }
+
+  header button.btn-primary {
+    background: #cba6f7;
+    color: #1e1e2e;
+    border-color: #cba6f7;
+    font-weight: 600;
+  }
+
+  header button.btn-primary:hover {
+    background: #b4befe;
+    border-color: #b4befe;
+    color: #1e1e2e;
+  }
+
+  header button.btn-toggle {
+    background: none;
+    border-color: transparent;
+    color: #585b70;
+    padding: 6px 10px;
+  }
+
+  header button.btn-toggle:hover {
+    color: #cdd6f4;
+    background: #313244;
+  }
+
+  header button.btn-toggle.active {
+    color: #a6e3a1;
+    background: rgba(166, 227, 161, 0.1);
   }
 
   .main {
@@ -254,7 +309,7 @@
     background: #fff;
   }
 
-  .console-panel {
+  .bottom-panel {
     height: 150px;
     min-height: 150px;
     background: #181825;
@@ -264,20 +319,40 @@
     font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
   }
 
-  .console-panel .panel-header {
+  .bottom-panel-tabs {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 0;
+    padding: 0 8px;
+    background: #181825;
+    border-bottom: 1px solid #313244;
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    flex-shrink: 0;
+  }
+
+  .bottom-tab {
     padding: 6px 14px;
     font-size: 12px;
     font-weight: 600;
-    color: #a6adc8;
-    border-bottom: 1px solid #313244;
-    background: #181825;
-    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    color: #585b70;
+    background: none;
+    border: none;
+    border-bottom: 2px solid transparent;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s, border-color 0.2s;
   }
 
-  .console-panel .panel-header button {
+  .bottom-tab:hover { color: #a6adc8; }
+
+  .bottom-tab.active {
+    color: #cdd6f4;
+    border-bottom-color: #cba6f7;
+  }
+
+  .bottom-panel-tabs .clear-btn {
     margin-left: auto;
     background: #313244;
     color: #cdd6f4;
@@ -289,8 +364,64 @@
     transition: background 0.2s;
   }
 
-  .console-panel .panel-header button:hover {
-    background: #45475a;
+  .bottom-panel-tabs .clear-btn:hover { background: #45475a; }
+
+  .bottom-tab-content {
+    flex: 1;
+    display: none;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .bottom-tab-content.active {
+    display: flex;
+  }
+
+  /* Terminal styles */
+  .terminal-output {
+    flex: 1;
+    overflow-y: auto;
+    padding: 6px 12px;
+    font-size: 12px;
+    line-height: 1.5;
+    color: #cdd6f4;
+  }
+
+  .terminal-output::-webkit-scrollbar { width: 4px; }
+  .terminal-output::-webkit-scrollbar-thumb { background: #45475a; border-radius: 4px; }
+
+  .terminal-line { white-space: pre-wrap; word-break: break-all; }
+  .terminal-line.error { color: #f38ba8; }
+  .terminal-line.success { color: #a6e3a1; }
+  .terminal-line.info { color: #89b4fa; }
+  .terminal-line.prompt-echo { color: #585b70; }
+  .terminal-line.folder-name { color: #f9e2af; }
+
+  .terminal-input-line {
+    display: flex;
+    align-items: center;
+    padding: 4px 12px 6px;
+    border-top: 1px solid #252536;
+    flex-shrink: 0;
+  }
+
+  .terminal-prompt {
+    color: #a6e3a1;
+    font-size: 12px;
+    font-weight: 600;
+    margin-right: 8px;
+    white-space: nowrap;
+  }
+
+  .terminal-input-line input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    outline: none;
+    color: #cdd6f4;
+    font-family: 'Cascadia Code', 'Fira Code', 'Consolas', 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.5;
   }
 
   .dot.console { background: #f38ba8; }
@@ -851,10 +982,28 @@
     <span class="unsaved-dot" id="unsavedDot" title="Unsaved changes"></span>
   </div>
   <div class="actions">
-    <button onclick="saveProject()">Save</button>
-    <button onclick="resetEditors()">Reset</button>
-    <button onclick="copyOutput()">Copy Output</button>
-    <button onclick="downloadZip()">Download ZIP</button>
+    <button id="togglePreviewBtn" class="btn-toggle active" onclick="togglePreview()" title="Toggle preview panel">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>
+      Preview
+    </button>
+    <span class="separator"></span>
+    <button class="btn-primary" onclick="saveProject()" title="Save project (Ctrl+S)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+      Save
+    </button>
+    <button onclick="resetEditors()" title="Reset all editors">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>
+      Reset
+    </button>
+    <span class="separator"></span>
+    <button onclick="copyOutput()" title="Copy combined HTML output">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+      Copy
+    </button>
+    <button onclick="downloadZip()" title="Download project as ZIP">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+      Download
+    </button>
   </div>
 </header>
 
@@ -922,13 +1071,23 @@
   <div class="preview-panel" id="previewPane">
     <div class="panel-header"><span class="dot"></span>Preview</div>
     <iframe id="preview"></iframe>
-    <div class="console-panel">
-      <div class="panel-header">
-        <span class="dot console"></span>Console
-        <button onclick="clearConsole()">Clear</button>
+    <div class="bottom-panel">
+      <div class="bottom-panel-tabs">
+        <button class="bottom-tab active" data-tab="console" onclick="switchBottomTab('console')"><span class="dot console"></span>Console</button>
+        <button class="bottom-tab" data-tab="terminal" onclick="switchBottomTab('terminal')"><span class="dot" style="background:#a6e3a1"></span>Terminal</button>
+        <button class="clear-btn" id="bottomClearBtn" onclick="clearActiveBottom()">Clear</button>
       </div>
-      <div class="console-output" id="consoleOutput">
-        <div class="console-empty">Console output will appear here...</div>
+      <div class="bottom-tab-content active" id="consoleTab">
+        <div class="console-output" id="consoleOutput">
+          <div class="console-empty">Console output will appear here...</div>
+        </div>
+      </div>
+      <div class="bottom-tab-content" id="terminalTab">
+        <div class="terminal-output" id="terminalOutput"></div>
+        <div class="terminal-input-line">
+          <span class="terminal-prompt" id="terminalPrompt">~/project $</span>
+          <input type="text" id="terminalInput" spellcheck="false" autocomplete="off" placeholder="Type a command...">
+        </div>
       </div>
     </div>
   </div>
@@ -1676,6 +1835,11 @@ function deleteFileById(fileId) {
         showEditorEmpty();
       }
     }
+    // If terminal cwd was inside deleted folder, reset to root
+    if (typeof terminalCwd !== 'undefined' && idsToDelete.indexOf(terminalCwd) !== -1) {
+      terminalCwd = null;
+      if (typeof updateTerminalPrompt === 'function') updateTerminalPrompt();
+    }
     renderFileTree();
     renderEditorTabs();
     showToast(label.charAt(0).toUpperCase() + label.slice(1) + ' deleted', 'info');
@@ -2120,6 +2284,30 @@ document.addEventListener('mouseup', function() {
   }
 });
 
+// Toggle Preview
+var previewHidden = false;
+var eyeOpenSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"/><circle cx="12" cy="12" r="3"/></svg>';
+var eyeClosedSVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94"/><path d="M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19"/><line x1="1" y1="1" x2="23" y2="23"/></svg>';
+function togglePreview() {
+  previewHidden = !previewHidden;
+  var btn = document.getElementById('togglePreviewBtn');
+  if (previewHidden) {
+    previewPane.style.display = 'none';
+    resizer.style.display = 'none';
+    editorsPane.style.flex = '1';
+    btn.innerHTML = eyeClosedSVG + ' Preview';
+    btn.classList.remove('active');
+  } else {
+    previewPane.style.display = '';
+    resizer.style.display = '';
+    editorsPane.style.flex = '';
+    previewPane.style.flex = '';
+    btn.innerHTML = eyeOpenSVG + ' Preview';
+    btn.classList.add('active');
+    updatePreview();
+  }
+}
+
 function resetEditors() {
   var project = getCurrentProject();
   if (!project || !project.files) return;
@@ -2369,11 +2557,13 @@ function loadProject(id) {
   migrateProject(project);
   setProjects(projects);
   setActiveId(id);
-  // Reset tabs and clipboard
+  // Reset tabs, clipboard, and terminal cwd
   openFiles = [];
   activeFileId = null;
   selectedTreeId = null;
   clipboard = null;
+  terminalCwd = null;
+  if (typeof updateTerminalPrompt === 'function') updateTerminalPrompt();
   // Open first html file or first file
   var firstHtml = project.files.find(function(f) { return f.type === 'file' && getLang(f.name) === 'html'; });
   var firstFile = project.files.find(function(f) { return f.type === 'file'; });
@@ -2505,6 +2695,387 @@ document.addEventListener('keydown', function(e) {
     }
   }
 });
+
+// ---- Bottom Panel Tab Switching ----
+var activeBottomTab = 'console';
+
+function switchBottomTab(tab) {
+  activeBottomTab = tab;
+  document.querySelectorAll('.bottom-tab').forEach(function(btn) {
+    btn.classList.toggle('active', btn.getAttribute('data-tab') === tab);
+  });
+  document.getElementById('consoleTab').classList.toggle('active', tab === 'console');
+  document.getElementById('terminalTab').classList.toggle('active', tab === 'terminal');
+  if (tab === 'terminal') {
+    document.getElementById('terminalInput').focus();
+  }
+}
+
+function clearActiveBottom() {
+  if (activeBottomTab === 'console') {
+    clearConsole();
+  } else {
+    clearTerminal();
+  }
+}
+
+// ---- Terminal Engine ----
+var terminalCwd = null; // null = root, otherwise folder ID
+var terminalHistory = [];
+var terminalHistoryIdx = -1;
+
+function getFolderPath(folderId) {
+  var project = getCurrentProject();
+  if (!project || !project.files) return '/';
+  var parts = [];
+  var current = folderId;
+  while (current) {
+    var folder = project.files.find(function(f) { return f.id === current; });
+    if (!folder) break;
+    parts.unshift(folder.name);
+    current = folder.parentId;
+  }
+  return '/' + parts.join('/');
+}
+
+function resolvePathToFolder(pathStr) {
+  var project = getCurrentProject();
+  if (!project || !project.files) return { error: 'No project loaded' };
+  if (!pathStr || pathStr === '/') return { id: null };
+
+  var parts;
+  var startId;
+  if (pathStr.startsWith('/')) {
+    parts = pathStr.split('/').filter(Boolean);
+    startId = null;
+  } else {
+    parts = pathStr.split('/').filter(Boolean);
+    startId = terminalCwd;
+  }
+
+  var currentId = startId;
+  for (var i = 0; i < parts.length; i++) {
+    var part = parts[i];
+    if (part === '.') continue;
+    if (part === '..') {
+      if (currentId === null) continue; // already at root
+      var parentFolder = project.files.find(function(f) { return f.id === currentId; });
+      currentId = parentFolder ? parentFolder.parentId : null;
+      continue;
+    }
+    var child = project.files.find(function(f) {
+      return f.parentId === currentId && f.name === part && f.type === 'folder';
+    });
+    if (!child) return { error: 'No such directory: ' + part };
+    currentId = child.id;
+  }
+  return { id: currentId };
+}
+
+function resolvePathToFile(pathStr) {
+  var project = getCurrentProject();
+  if (!project || !project.files) return { error: 'No project loaded' };
+  if (!pathStr) return { error: 'No path specified' };
+
+  var lastSlash = pathStr.lastIndexOf('/');
+  var dirPath, fileName;
+  if (lastSlash === -1) {
+    dirPath = null;
+    fileName = pathStr;
+  } else {
+    dirPath = pathStr.substring(0, lastSlash) || '/';
+    fileName = pathStr.substring(lastSlash + 1);
+  }
+
+  var parentId;
+  if (dirPath === null) {
+    parentId = terminalCwd;
+  } else {
+    var resolved = resolvePathToFolder(dirPath);
+    if (resolved.error) return resolved;
+    parentId = resolved.id;
+  }
+
+  var file = project.files.find(function(f) {
+    return f.parentId === parentId && f.name === fileName;
+  });
+  if (!file) return { error: 'No such file or directory: ' + fileName };
+  return { file: file, parentId: parentId };
+}
+
+function appendTerminalLine(text, cls) {
+  var output = document.getElementById('terminalOutput');
+  var line = document.createElement('div');
+  line.className = 'terminal-line' + (cls ? ' ' + cls : '');
+  line.textContent = text;
+  output.appendChild(line);
+  output.scrollTop = output.scrollHeight;
+}
+
+function appendTerminalPromptEcho(cmd) {
+  var prompt = getTerminalPromptStr();
+  appendTerminalLine(prompt + ' ' + cmd, 'prompt-echo');
+}
+
+function getTerminalPromptStr() {
+  var path = getFolderPath(terminalCwd);
+  var projectName = '';
+  var project = getCurrentProject();
+  if (project) projectName = project.name;
+  return '~/' + (projectName || 'project') + (path === '/' ? '' : path) + ' $';
+}
+
+function updateTerminalPrompt() {
+  document.getElementById('terminalPrompt').textContent = getTerminalPromptStr();
+}
+
+function clearTerminal() {
+  document.getElementById('terminalOutput').innerHTML = '';
+}
+
+function executeTerminalCommand(input) {
+  var raw = input.trim();
+  if (!raw) return;
+
+  // Add to history
+  terminalHistory.push(raw);
+  terminalHistoryIdx = terminalHistory.length;
+
+  appendTerminalPromptEcho(raw);
+
+  // Parse command and args
+  var parts = raw.match(/(?:[^\s"]+|"[^"]*")+/g) || [];
+  var cmd = parts[0].toLowerCase();
+  var args = parts.slice(1).map(function(a) {
+    return a.replace(/^"|"$/g, '');
+  });
+
+  var project = getCurrentProject();
+  if (!project || !project.files) {
+    if (cmd !== 'help' && cmd !== 'clear' && cmd !== 'echo' && cmd !== 'date' && cmd !== 'whoami') {
+      appendTerminalLine('No project loaded.', 'error');
+      return;
+    }
+  }
+
+  switch (cmd) {
+    case 'help':
+      appendTerminalLine('Available commands:', 'info');
+      appendTerminalLine('  help             Show this help');
+      appendTerminalLine('  clear            Clear terminal');
+      appendTerminalLine('  ls [path]        List files and folders');
+      appendTerminalLine('  cat <file>       Display file contents');
+      appendTerminalLine('  touch <file>     Create a new file');
+      appendTerminalLine('  mkdir <folder>   Create a new folder');
+      appendTerminalLine('  rm <name>        Delete a file or folder');
+      appendTerminalLine('  echo <text>      Print text');
+      appendTerminalLine('  pwd              Show current directory');
+      appendTerminalLine('  cd <dir>         Change directory');
+      appendTerminalLine('  date             Show current date/time');
+      appendTerminalLine('  whoami           Show current user');
+      break;
+
+    case 'clear':
+      clearTerminal();
+      break;
+
+    case 'pwd':
+      appendTerminalLine(getFolderPath(terminalCwd));
+      break;
+
+    case 'ls': {
+      var lsTarget = terminalCwd;
+      if (args.length > 0) {
+        var resolved = resolvePathToFolder(args[0]);
+        if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+        lsTarget = resolved.id;
+      }
+      var items = project.files.filter(function(f) { return f.parentId === lsTarget; });
+      if (items.length === 0) {
+        appendTerminalLine('(empty directory)', 'info');
+      } else {
+        var folders = items.filter(function(f) { return f.type === 'folder'; }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+        var files = items.filter(function(f) { return f.type === 'file'; }).sort(function(a, b) { return a.name.localeCompare(b.name); });
+        folders.forEach(function(f) { appendTerminalLine(f.name + '/', 'folder-name'); });
+        files.forEach(function(f) { appendTerminalLine(f.name); });
+      }
+      break;
+    }
+
+    case 'cd': {
+      if (args.length === 0 || args[0] === '~' || args[0] === '/') {
+        terminalCwd = null;
+        updateTerminalPrompt();
+        break;
+      }
+      var resolved = resolvePathToFolder(args[0]);
+      if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+      terminalCwd = resolved.id;
+      updateTerminalPrompt();
+      break;
+    }
+
+    case 'cat': {
+      if (args.length === 0) { appendTerminalLine('Usage: cat <file>', 'error'); break; }
+      var resolved = resolvePathToFile(args[0]);
+      if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+      if (resolved.file.type === 'folder') { appendTerminalLine('cat: ' + resolved.file.name + ': Is a directory', 'error'); break; }
+      var content = resolved.file.content || '';
+      if (content) {
+        appendTerminalLine(content);
+      } else {
+        appendTerminalLine('(empty file)', 'info');
+      }
+      break;
+    }
+
+    case 'touch': {
+      if (args.length === 0) { appendTerminalLine('Usage: touch <filename>', 'error'); break; }
+      var fileName = args[0];
+      var lastSlash = fileName.lastIndexOf('/');
+      var parentId = terminalCwd;
+      var name = fileName;
+      if (lastSlash !== -1) {
+        var dirPath = fileName.substring(0, lastSlash) || '/';
+        name = fileName.substring(lastSlash + 1);
+        var resolved = resolvePathToFolder(dirPath);
+        if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+        parentId = resolved.id;
+      }
+      if (!name) { appendTerminalLine('Invalid file name', 'error'); break; }
+      var dup = project.files.find(function(f) { return f.parentId === parentId && f.name === name; });
+      if (dup) { appendTerminalLine('File already exists: ' + name, 'error'); break; }
+      var projects = getProjects();
+      var proj = projects.find(function(p) { return p.id === getActiveId(); });
+      var newFile = { id: genId(), name: name, type: 'file', parentId: parentId, content: '' };
+      proj.files.push(newFile);
+      proj.updatedAt = new Date().toISOString();
+      setProjects(projects);
+      renderFileTree();
+      markUnsaved();
+      appendTerminalLine('Created file: ' + name, 'success');
+      break;
+    }
+
+    case 'mkdir': {
+      if (args.length === 0) { appendTerminalLine('Usage: mkdir <foldername>', 'error'); break; }
+      var folderName = args[0];
+      var lastSlash = folderName.lastIndexOf('/');
+      var parentId = terminalCwd;
+      var name = folderName;
+      if (lastSlash !== -1) {
+        var dirPath = folderName.substring(0, lastSlash) || '/';
+        name = folderName.substring(lastSlash + 1);
+        var resolved = resolvePathToFolder(dirPath);
+        if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+        parentId = resolved.id;
+      }
+      if (!name) { appendTerminalLine('Invalid folder name', 'error'); break; }
+      var dup = project.files.find(function(f) { return f.parentId === parentId && f.name === name && f.type === 'folder'; });
+      if (dup) { appendTerminalLine('Folder already exists: ' + name, 'error'); break; }
+      var projects = getProjects();
+      var proj = projects.find(function(p) { return p.id === getActiveId(); });
+      var newFolder = { id: genId(), name: name, type: 'folder', parentId: parentId };
+      proj.files.push(newFolder);
+      proj.updatedAt = new Date().toISOString();
+      setProjects(projects);
+      renderFileTree();
+      markUnsaved();
+      appendTerminalLine('Created folder: ' + name, 'success');
+      break;
+    }
+
+    case 'rm': {
+      if (args.length === 0) { appendTerminalLine('Usage: rm <name>', 'error'); break; }
+      var resolved = resolvePathToFile(args[0]);
+      if (resolved.error) { appendTerminalLine(resolved.error, 'error'); break; }
+      var target = resolved.file;
+      var projects = getProjects();
+      var proj = projects.find(function(p) { return p.id === getActiveId(); });
+      // Collect all IDs to delete (recursive for folders)
+      var idsToDelete = [];
+      function collectRmIds(id) {
+        idsToDelete.push(id);
+        proj.files.forEach(function(f) {
+          if (f.parentId === id) collectRmIds(f.id);
+        });
+      }
+      collectRmIds(target.id);
+      proj.files = proj.files.filter(function(f) { return idsToDelete.indexOf(f.id) === -1; });
+      proj.updatedAt = new Date().toISOString();
+      setProjects(projects);
+      // Clear clipboard if deleted item was on it
+      if (clipboard && idsToDelete.indexOf(clipboard.id) !== -1) clipboard = null;
+      if (idsToDelete.indexOf(selectedTreeId) !== -1) selectedTreeId = null;
+      // Close tabs for deleted files
+      idsToDelete.forEach(function(did) {
+        var idx = openFiles.indexOf(did);
+        if (idx !== -1) openFiles.splice(idx, 1);
+      });
+      if (idsToDelete.indexOf(activeFileId) !== -1) {
+        if (openFiles.length > 0) {
+          openFile(openFiles[openFiles.length - 1]);
+        } else {
+          showEditorEmpty();
+        }
+      }
+      // If terminal cwd was inside deleted folder, reset to root
+      if (idsToDelete.indexOf(terminalCwd) !== -1) {
+        terminalCwd = null;
+        updateTerminalPrompt();
+      }
+      renderFileTree();
+      renderEditorTabs();
+      markUnsaved();
+      appendTerminalLine('Removed: ' + target.name, 'success');
+      break;
+    }
+
+    case 'echo':
+      appendTerminalLine(args.join(' '));
+      break;
+
+    case 'date':
+      appendTerminalLine(new Date().toString());
+      break;
+
+    case 'whoami':
+      appendTerminalLine('developer');
+      break;
+
+    default:
+      appendTerminalLine('Command not found: ' + cmd + '. Type "help" for available commands.', 'error');
+  }
+}
+
+// Terminal input handling
+var terminalInput = document.getElementById('terminalInput');
+
+terminalInput.addEventListener('keydown', function(e) {
+  if (e.key === 'Enter') {
+    var cmd = terminalInput.value;
+    terminalInput.value = '';
+    executeTerminalCommand(cmd);
+  } else if (e.key === 'ArrowUp') {
+    e.preventDefault();
+    if (terminalHistory.length > 0 && terminalHistoryIdx > 0) {
+      terminalHistoryIdx--;
+      terminalInput.value = terminalHistory[terminalHistoryIdx];
+    }
+  } else if (e.key === 'ArrowDown') {
+    e.preventDefault();
+    if (terminalHistoryIdx < terminalHistory.length - 1) {
+      terminalHistoryIdx++;
+      terminalInput.value = terminalHistory[terminalHistoryIdx];
+    } else {
+      terminalHistoryIdx = terminalHistory.length;
+      terminalInput.value = '';
+    }
+  }
+});
+
+// Show welcome message
+appendTerminalLine('Welcome to the terminal. Type "help" for available commands.', 'info');
 
 // ---- Init ----
 renderProjectList();
